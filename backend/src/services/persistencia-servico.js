@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto';
 import { UniqueConstraintError } from 'sequelize';
 import banco from '../config/banco.js';
 import { criarTabelas } from '../config/criar-tabelas.js';
-import RegistroCache from '../models/registro-cache.js';
 import OperacaoPendente from '../models/operacao-pendente.js';
 import { salvarCache, lerCache, substituirCache, confirmarOperacao } from '../repositories/cache-repositorio.js';
 import { executarOperacaoOnline, consultarCategoriaOnline } from '../repositories/operacao-online.js';
