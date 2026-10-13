@@ -11,12 +11,6 @@ if (process.env.SQLITE_EM_MEMORIA === 'true' && process.env.NODE_ENV !== 'produc
     arquivo = ':memory:';
 }
 
-export const bancoLocal = new Sequelize({
-    dialect: 'sqlite',
-    storage: arquivo,
-    logging: false,
-});
-
 export async function prepararPastaLocal() {
     if (arquivo === ':memory:') {
         return;
