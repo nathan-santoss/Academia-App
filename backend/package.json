@@ -8,8 +8,8 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "dev": "node --env-file=.env --watch src/servidor.js",
-    "start": "node --env-file=.env src/servidor.js",
+    "dev": "node src/servidor.js",
+    "start": "node src/servidor.js",
     "lint": "eslint .",
     "verificar": "npm run lint"
   },
