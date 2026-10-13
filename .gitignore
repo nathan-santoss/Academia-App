@@ -1,0 +1,25 @@
+# Mantenho dependências, segredos e arquivos gerados fora do controle de versão.
+node_modules/
+.expo/
+dist/
+.env
+.env.*
+!.env.example
+npm-debug.*
+.DS_Store
+mobile/web-build/
+mobile/expo-env.d.ts
+mobile/.kotlin/
+mobile/ios/
+mobile/android/
+.metro-health-check*
+*.tsbuildinfo
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+yarn-debug.*
+yarn-error.*
