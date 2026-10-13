@@ -1,14 +1,13 @@
-// Encaminho pedidos de catálogo, lembretes e sincronização aos serviços correspondentes.
+// Encaminho os pedidos de catálogo, lembretes e saúde aos serviços correspondentes.
 import * as catalogo from '../services/catalogo-servico.js';
 import * as lembretes from '../services/lembrete-servico.js';
-import { estadoPersistencia, listarPendencias, sincronizar } from '../services/persistencia-servico.js';
+import { verificarConexao } from '../services/persistencia-servico.js';
 
-function responderGravacao(resposta, resultado) {
-    if (resultado.pendente) {
-        return resposta.status(202).json(resultado);
-    }
-
-    return resposta.status(200).json(resultado);
+export async function consultarSaude(_requisicao, resposta) {
+    await verificarConexao();
+    resposta.json({
+        mensagem: 'API disponível.',
+    });
 }
 
 export async function listarCatalogo(requisicao, resposta) {
@@ -18,7 +17,7 @@ export async function listarCatalogo(requisicao, resposta) {
 export async function salvarCatalogo(requisicao, resposta) {
     const resultado = await catalogo.salvarCatalogo(requisicao.params.categoria, requisicao.params.id,
         requisicao.body, requisicao.get('Idempotency-Key'));
-    responderGravacao(resposta, resultado);
+    resposta.json(resultado);
 }
 
 export async function listarLembretes(requisicao, resposta) {
@@ -28,25 +27,11 @@ export async function listarLembretes(requisicao, resposta) {
 export async function salvarLembrete(requisicao, resposta) {
     const resultado = await lembretes.salvarLembrete(requisicao.body, requisicao.get('X-Aparelho-ID'),
         requisicao.get('Idempotency-Key'));
-    responderGravacao(resposta, resultado);
+    resposta.json(resultado);
 }
 
 export async function excluirLembrete(requisicao, resposta) {
     const resultado = await lembretes.excluirLembrete(requisicao.params.id, requisicao.get('X-Aparelho-ID'),
         requisicao.get('Idempotency-Key'));
-    responderGravacao(resposta, resultado);
-}
-
-export async function consultarSincronizacao(_requisicao, resposta) {
-    resposta.json({
-        dados: await estadoPersistencia(),
-        pendencias: await listarPendencias(),
-    });
-}
-
-export async function sincronizarAgora(_requisicao, resposta) {
-    await sincronizar();
-    resposta.json({
-        dados: await estadoPersistencia(),
-    });
+    resposta.json(resultado);
 }

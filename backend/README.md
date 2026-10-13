@@ -1,64 +1,83 @@
 # Backend da Academia
 
-Esta etapa contém apenas a base da API e o cadastro, a listagem e a consulta de alunos. Uso JavaScript, Express, Sequelize e PostgreSQL no Neon.
+API em JavaScript, Express e Sequelize, com persistência exclusivamente no PostgreSQL do Neon. O backend não mantém banco local, cache de cadastros ou fila de gravações. As requisições de gravação só recebem sucesso depois da confirmação do Neon.
 
-## Como ler o código
+## Organização
 
-O caminho principal é **rota → controller → service → repository → model → banco**. Cada arquivo tem uma responsabilidade, usando funções diretas.
+O caminho é **rota → controller → service → repository → model**. As validações e funções auxiliares ficam em `utils`; a conexão e a preparação das tabelas ficam em `config`.
 
-| Arquivo ou pasta | O que faz |
+- `src/servidor.js`: autentica no Neon, prepara as tabelas e abre a porta HTTP.
+- `src/config/banco.js`: lê `DATABASE_URL` e configura SSL, limites de tempo e conexões.
+- `src/config/criar-tabelas.js`: cria apenas as tabelas ausentes.
+- `src/services/persistencia-servico.js`: encaminha consultas e gravações ao repositório online.
+- `src/repositories/operacao-online.js`: grava os dados e o recibo da operação na mesma transação.
+- `src/repositories/aluno-repositorio.js`: faz busca, paginação e consulta de alunos no banco.
+- `src/models`: define pessoas, alunos, lembretes, planos, modalidades e operações recebidas.
+
+Uso `sync()` sem `force` e sem `alter`: tabelas existentes e seus dados são preservados. Esse comando não corrige colunas de uma estrutura antiga. Mudanças desse tipo precisam de planejamento próprio.
+
+## Configurar no Render
+
+Crie ou configure um **Web Service** com estes valores:
+
+| Campo | Valor |
 | --- | --- |
-| `src/servidor.js` | Conecta ao banco, aguarda a criação das tabelas e inicia o servidor. |
-| `src/aplicacao.js` | Configura o Express e o tratamento básico de erros. |
-| `src/config/banco.js` | Lê a conexão privada do ambiente. |
-| `src/routes/aluno-rotas.js` | Define os endereços de cadastro e consulta. |
-| `src/controllers/aluno-controlador.js` | Recebe o pedido HTTP, chama o serviço e envia a resposta. |
-| `src/services/aluno-servico.js` | Coordena validações, regras do cadastro e preparação dos resultados. |
-| `src/repositories/aluno-repositorio.js` | Faz consultas e gravações no banco, incluindo a transação do cadastro. |
-| `src/models` | Descreve pessoa, aluno e seu relacionamento. |
-| `src/config/criar-tabelas.js` | Cria as tabelas ausentes a partir dos modelos Sequelize. |
-| `src/utils/validar-*.js` | Confere campos, CPF, idade e parâmetros de consulta. |
-| `src/utils/formatar-aluno.js` | Escolhe os dados devolvidos ao frontend. |
-| `src/middlewares/disponibilidade-alunos.js` | Mantém o bloqueio temporário das rotas de alunos em produção. |
+| Root Directory | `backend` |
+| Build Command | `npm ci --include=dev && npm run verificar` |
+| Start Command | `npm start` |
+| Health Check Path | `/api/v1/saude` |
+| `NODE_ENV` | `production` |
+| `DATABASE_URL` | URL privada copiada do painel do Neon |
 
-Comece pela rota `POST /`, que chama `cadastrarAluno` no controller. Ele verifica o formato HTTP e encaminha o corpo ao service. O service valida os dados e solicita o cadastro. O repository salva pessoa e aluno na mesma transação: se uma gravação falhar, a outra também é desfeita. A restrição única de CPF no banco impede duplicidade, inclusive em pedidos simultâneos, sem uma consulta prévia repetida.
+Não há compilação nem script `build` neste backend. A instalação e o ESLint são suficientes para a etapa de build. Incluo as dependências de desenvolvimento para executar o ESLint mesmo com `NODE_ENV=production`.
 
-Os problemas previstos voltam do service como um objeto simples com `erro` e `mensagem`. O controller transforma esse resultado em uma resposta HTTP; os detalhes internos não são enviados ao frontend. `utils` reúne a apresentação dos dados e as validações. A criação das tabelas fica em `config`, deixando `models` apenas com as entidades. As URLs e as respostas da API permanecem iguais.
+O servidor prioriza `PORT`, fornecida pelo Render. `PORTA` continua aceita quando `PORT` está ausente; o padrão é 3000. Em produção ou no Render, o endereço é `0.0.0.0`, mesmo se houver um `HOST` antigo apontando para `127.0.0.1`.
 
-Não há fábricas de funções, classes próprias de erro ou scripts de geração. Os comentários explicam a intenção em primeira pessoa. O código usa quatro espaços de indentação, sem ternários, `for`, `forEach`, `?.` ou `??`.
+O `package.json` limita o Node às versões 24 até 26. Uma variável `NODE_VERSION` no painel do Render tem precedência; mantenha-a nessa faixa. Não foi necessário trocar bibliotecas para corrigir o erro de importação.
 
-## Preparar o ambiente
+Referências: [configuração de Web Services e portas](https://render.com/docs/web-services), [verificações de saúde](https://render.com/docs/health-checks) e [versão do Node](https://render.com/docs/node-version).
 
-1. Crie `backend/.env` copiando `.env.example` quando quiser executar o projeto.
-2. Preencha `DATABASE_URL` com a conexão privada do Neon. As requisições da API não exigem senha ou chave de desenvolvimento.
-3. Dentro de `backend`, execute `npm run dev`. O JavaScript cria as tabelas pelo Sequelize antes de abrir a API.
+## Conexão com o Neon
 
-As dependências já estão instaladas neste computador. Em uma nova cópia do projeto, use `npm ci`. O Node lê o `.env` ao iniciar, sem biblioteca adicional.
+Defina `DATABASE_URL` nas variáveis de ambiente do backend, sem incluir aspas, comandos de shell ou o prefixo `DATABASE_URL=` no valor do campo do Render. Use a URL completa fornecida pelo Neon; o endereço com `-pooler` é aceito.
 
-O banco PostgreSQL precisa existir no Neon; sua conexão entra em `DATABASE_URL`. O backend cria a estrutura dentro desse banco, sem precisar executar SQL manualmente. Os modelos JavaScript são a definição dessa estrutura:
+O backend valida protocolo PostgreSQL, host do Neon, banco, usuário, senha e porta. A conexão exige SSL com verificação do certificado. A URL pode manter `sslmode=require&channel_binding=require`. Nesta versão, o Sequelize 6 não repassa a opção de channel binding ao driver; a proteção configurada pelo backend é TLS com validação do certificado.
 
-- `pessoa.js` define a tabela `pessoas`, com UUID e CPF único.
-- `aluno.js` define a tabela `alunos`, com UUID e vínculo único com uma pessoa.
-- `numeroMatricula` usa `autoIncrement`: o Sequelize cria uma sequência no PostgreSQL. A API apresenta o número como `A000001`, `A000002` e assim por diante.
+A abertura de cada conexão tem limite de dez segundos, assim como cada instrução SQL. O pool usa até cinco conexões e espera até quinze segundos por uma conexão livre. Erros não imprimem a URL, a senha ou o SQL.
 
-Uso [`sync()` do Sequelize](https://sequelize.org/docs/v6/core-concepts/model-basics/#model-synchronization) sem `force` e sem `alter`. Ele cria as tabelas ausentes, preserva os dados e não modifica as colunas das tabelas existentes. Alterações futuras na estrutura serão planejadas separadamente. Se você já executou o SQL anterior, a sequência existente continua atendendo aos cadastros.
+Sem configuração válida, conexão ou permissão para preparar as tabelas, o processo termina com erro antes de receber requisições. O endpoint de saúde também consulta o Neon; se o banco ficar indisponível depois do início, a API informa a falha.
 
-Sem `.env` ou uma conexão válida, o servidor não inicia. A conexão real com o Neon depende das credenciais locais; elas não foram fornecidas nem testadas aqui. Não coloque a senha do banco no app mobile.
+Referências: [Node.js com Neon](https://neon.com/docs/guides/node) e [SSL e channel binding no pg](https://node-postgres.com/features/ssl).
 
-## Usar a API
+## Executar no computador
 
-Endereço local: `http://127.0.0.1:3000/api/v1`.
+1. Instale as dependências com `npm ci`, dentro de `backend`.
+2. Defina `DATABASE_URL` no ambiente. Se desejar usar um arquivo local por conta própria, tome `.env.example` como referência; não versione credenciais.
+3. Execute `npm run dev`. Esse comando lê `.env` somente quando o arquivo existe. `npm start` usa as variáveis fornecidas pelo ambiente, como no Render.
+
+Mesmo executado no computador, o backend usa o Neon. O endereço HTTP padrão é `http://127.0.0.1:3000/api/v1`. Em desenvolvimento, `HOST` permite escolher a interface de rede.
+
+## Endpoints e respostas
+
+Todos os caminhos abaixo usam o prefixo `/api/v1`.
 
 | Método | Caminho | Uso |
 | --- | --- | --- |
-| GET | `/saude` | Confere se a API está respondendo. |
-| POST | `/alunos` | Cadastra pessoa e aluno. |
-| GET | `/alunos?pagina=1&limite=20` | Lista uma página de alunos. |
-| GET | `/alunos?busca=Ana` | Busca por parte do nome. |
-| GET | `/alunos?busca=A000001` | Busca pela matrícula completa. |
-| GET | `/alunos/:id` | Consulta um aluno pelo UUID retornado no cadastro. |
+| GET | `/saude` | Confere a API e a conexão com o Neon. |
+| POST | `/alunos` | Cadastra pessoa e aluno na mesma transação. |
+| GET | `/alunos?pagina=1&limite=20&busca=Ana` | Busca por nome ou matrícula e pagina no banco. |
+| GET | `/alunos/:id` | Consulta um aluno por UUID. |
+| GET | `/catalogo/:categoria` | Lista `plano` ou `modalidade`. |
+| PUT | `/catalogo/:categoria/:id` | Cria ou edita um item do catálogo. |
+| GET | `/lembretes` | Lista os lembretes da instalação indicada. |
+| POST | `/lembretes` | Salva um lembrete no Neon. |
+| DELETE | `/lembretes/:id` | Exclui um lembrete da instalação indicada. |
 
-No cadastro, envie `Content-Type: application/json`. Não é necessário enviar senha ou chave em nenhum cabeçalho.
+Envie JSON nas gravações. As requisições não exigem senha ou chave de desenvolvimento. `Idempotency-Key` é opcional e aceita um UUID v4 para reconhecer reenvios: o mesmo ID com os mesmos dados recupera a resposta já salva no Neon; dados diferentes com o mesmo ID geram 409. Sem esse cabeçalho, o backend gera o ID, mantendo a compatibilidade com o mobile.
+
+Os lembretes usam `X-Aparelho-ID` com um UUID v4. Ele identifica uma instalação; não substitui autenticação. Para editar um catálogo existente, envie `versaoAnterior` com o `atualizadoEm` recebido na consulta.
+
+Cadastro de aluno:
 
 ```json
 {
@@ -70,28 +89,44 @@ No cadastro, envie `Content-Type: application/json`. Não é necessário enviar 
 }
 ```
 
-Todos esses campos são obrigatórios. `fotoUrl` (URL HTTPS) e `contatoEmergencia` (objeto com `nome` e `telefone`) são opcionais. Não há upload de imagem nesta etapa. Use dados fictícios durante o desenvolvimento.
+Nome, CPF, nascimento, e-mail e telefone são obrigatórios. `fotoUrl` HTTPS e `contatoEmergencia` com nome e telefone são opcionais. As validações existentes de CPF e idade continuam no backend. O cadastro não cria login, assinatura, pagamento ou treino.
 
-A validação exige CPF válido e 18 anos completos. A idade usa o calendário de Brasília; para nascimento em 29/02, considera 01/03 nos anos sem essa data. A verificação matemática do CPF não comprova a identidade. CPF já existente retorna conflito, sem vincular automaticamente outra pessoa. Matrículas vêm da sequência do banco; lacunas são normais. O cadastro não cria login, plano, pagamento ou ficha de treino.
+As respostas de gravação e detalhe contêm `dados`; a listagem de alunos também contém `pagina`, `total` e `totalPaginas`. A matrícula vem da sequência PostgreSQL e é apresentada como `A000001`. A listagem consulta apenas as colunas do resumo e usa vinte itens por padrão, até cem.
 
-As respostas foram simplificadas:
+O cadastro de aluno retorna 201; as outras operações bem-sucedidas retornam 200. Erros de validação retornam 422, conflitos retornam 409, registros ausentes retornam 404 e indisponibilidade de conexão retorna 503. Falhas inesperadas retornam 500. Uma falha de comunicação durante a confirmação pode deixar o resultado incerto: consulte os dados antes de repetir ou reutilize a mesma chave de idempotência.
 
-- Cadastro e detalhe: `{ "dados": { ... } }`.
-- Listagem: `{ "dados": [], "pagina": 1, "total": 0, "totalPaginas": 0 }`.
-- Erro: `{ "mensagem": "Descrição do problema." }`.
+As rotas antigas `/sincronizacao` foram removidas, assim como as respostas de gravação pendente. Nenhuma gravação é guardada em fila local.
 
-O cadastro retorna HTTP 201. Dados inválidos retornam 422, CPF duplicado retorna 409 e aluno ausente retorna 404. Falhas inesperadas retornam 500 com mensagem genérica, sem expor SQL ou credenciais. O frontend pode usar `resposta.ok` e ler `mensagem` quando houver erro.
+## Bloqueio temporário em produção
 
-Cada item da listagem contém `id`, `matricula`, `nome`, `ativo` e `criadoEm`. O detalhe acrescenta CPF, nascimento, contatos e demais dados do cadastro. O limite padrão é 20, com máximo de 100. A busca por nome não diferencia maiúsculas e minúsculas, mas preserva acentos.
+As rotas de alunos, catálogo e lembretes continuam bloqueadas com 503 em produção ou quando `RENDER=true`, até a implementação de login e autorização reais. O endpoint `/api/v1/saude` fica disponível para o Render verificar o deploy.
 
-A consulta da lista busca apenas as colunas usadas no resumo. O mobile aproveita o limite padrão informado aqui e usa `totalPaginas` na navegação. As regras de CPF, idade e unicidade permanecem no backend; as conferências do formulário servem somente para orientar o preenchimento.
+Esse bloqueio não indica falha de deploy. Não use uma rota de alunos como health check e não mude o ambiente para desenvolvimento para liberar os dados publicamente.
 
-As requisições locais não exigem autenticação nesta etapa. As rotas de alunos continuam bloqueadas com `NODE_ENV=production` até a implementação de login e autorização, conforme as convenções do projeto. `DATABASE_URL` é usada apenas na conexão entre o backend e o Neon; ela não deve ser enviada pelo frontend.
+O mobile recebe somente a URL HTTPS pública da API, nunca `DATABASE_URL`. CORS de navegador não está configurado; o cliente atual é React Native nativo.
 
-Para acessar pelo celular, configure `HOST=0.0.0.0` e use o IP do computador na rede local. No celular, `localhost` representa o próprio aparelho. CORS de navegador não está configurado, pois o escopo atual é React Native nativo.
+## Diagnosticar e verificar
 
-## Conferir o código
+| Sintoma | Conferência |
+| --- | --- |
+| `ERR_MODULE_NOT_FOUND` | Confira se o commit contém todos os arquivos importados; as referências aos modelos locais foram removidas. |
+| `npm ci` falha | Confira `package.json` e `package-lock.json`; o lock precisa ser JSON válido e estar atualizado. |
+| Porta não detectada | Confira `PORT`, a mensagem de início e o endereço `0.0.0.0`. |
+| Autenticação recusada | Confira usuário e senha em `DATABASE_URL`. |
+| Falha SSL | Confira o endereço e os certificados do ambiente; mantenha a validação SSL ativa. |
+| Falha de permissão | O usuário do Neon precisa poder preparar e acessar as tabelas. |
+| Tabela ou coluna ausente | Compare a estrutura existente com os modelos; `sync()` não altera tabelas existentes. |
+| 503 em `/saude` | Confira a disponibilidade e a conexão com o Neon. |
+| 503 nas rotas de dados em produção | Bloqueio esperado enquanto login e permissões estão pendentes. |
 
-Execute `npm run verificar` para conferir sintaxe, indentação e operadores proibidos. Não há arquivos de testes locais nesta etapa, e essa verificação não acessa o Neon.
+Execute `npm run verificar` antes de concluir mudanças. Esse comando executa apenas ESLint; não acessa o banco nem comprova um deploy no Render. Não há arquivos de teste permanentes ou scripts de migração.
 
-As dependências continuam fixadas no arquivo de lock. Permanecem os dois alertas moderados já identificados na dependência `uuid` do Sequelize; não foi aplicado o rebaixamento incompatível sugerido pelo npm.
+## Verificações desta revisão de deploy
+
+- Instalação limpa com `npm ci` e execução de `npm run verificar` aprovadas no Node 26.1.0.
+- Imports dos 33 arquivos JavaScript do backend conferidos, sem referências a arquivos ausentes.
+- Inicialização simulada: preparação das seis tabelas antes da abertura HTTP, prioridade de `PORT`, endereço público no Render e encerramento com erro para porta ou URL inválidas.
+- Chamadas HTTP reais ao Express com persistência simulada em memória: cadastro sem cabeçalho extra, CPF duplicado, listagem, detalhe, reenvio, reversão de cadastro, edição de catálogo, lembretes, bloqueio de produção e indisponibilidade do banco.
+- O endereço fornecido do Neon resolveu no DNS, mas a conexão TCP à porta 5432 expirou neste ambiente, inclusive fora do sandbox. Não foi possível validar autenticação, certificado ou estrutura real do banco. Nenhum dado ou tabela foi alterado.
+
+Essas verificações não confirmam um deploy no Render. Depois de enviar as alterações ao repositório, confira o log até a mensagem de API disponível e a resposta de `/api/v1/saude` na URL pública.

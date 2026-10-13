@@ -1,4 +1,5 @@
 // Aplico cada escrita e seu recibo na mesma transação para tornar o reenvio seguro.
+import { UniqueConstraintError } from 'sequelize';
 import banco from '../config/banco.js';
 import OperacaoRecebida from '../models/operacao-recebida.js';
 import Pessoa from '../models/pessoa.js';
@@ -38,7 +39,7 @@ async function gravarAluno(entrada, transacao) {
         transaction: transacao,
     });
 
-    // Deixo a matrícula definitiva para a sequência do Neon, nunca para o cache.
+    // Deixo a geração da matrícula para a sequência do Neon.
     const aluno = await Aluno.create({
         id: entrada.id,
         pessoaId: pessoa.id,
@@ -61,7 +62,11 @@ async function gravarRegistro(operacao, transacao) {
 
     if (operacao.tipo === 'excluir') {
         // Confiro a instalação dona do lembrete antes de remover a anotação.
-        if (existente && existente.aparelhoId !== entrada.aparelhoId) {
+        if (!existente) {
+            throw erroOperacao(404, 'Lembrete não encontrado nesta instalação.');
+        }
+
+        if (existente.aparelhoId !== entrada.aparelhoId) {
             throw erroOperacao(403, 'Este lembrete pertence a outra instalação.');
         }
 
@@ -101,57 +106,75 @@ async function gravarRegistro(operacao, transacao) {
     return registro.toJSON();
 }
 
-export async function executarOperacaoOnline(operacao) {
-    return banco.transaction(async function gravarComRecibo(transacao) {
-        const recibo = await OperacaoRecebida.findByPk(operacao.id, {
-            transaction: transacao,
-        });
-
-        // Recupero o resultado quando o Neon gravou, mas a confirmação anterior se perdeu.
-        if (recibo) {
-            if (recibo.resumo !== operacao.resumo) {
-                throw erroOperacao(409, 'O identificador desta operação já foi usado com outros dados.');
-            }
-
-            return recibo.resultado;
-        }
-
-        let resultado;
-
-        if (operacao.entrada.categoria === 'aluno') {
-            resultado = await gravarAluno(operacao.entrada, transacao);
-        } else {
-            resultado = await gravarRegistro(operacao, transacao);
-        }
-
-        await OperacaoRecebida.create({
-            id: operacao.id,
-            resumo: operacao.resumo,
-            resultado: resultado,
-        }, {
-            transaction: transacao,
-        });
-
-        return resultado;
+async function consultarRecibo(operacao, transacao) {
+    const recibo = await OperacaoRecebida.findByPk(operacao.id, {
+        transaction: transacao,
     });
+
+    if (recibo && recibo.resumo !== operacao.resumo) {
+        throw erroOperacao(409, 'O identificador desta operação já foi usado com outros dados.');
+    }
+
+    return recibo;
 }
 
-export async function consultarCategoriaOnline(categoria) {
-    if (categoria === 'aluno') {
-        const alunos = await Aluno.findAll({
-            include: [{
-                model: Pessoa,
-                as: 'pessoa',
-            }],
-            order: [['numeroMatricula', 'ASC']],
+export async function executarOperacaoOnline(operacao) {
+    try {
+        return await banco.transaction(async function gravarComRecibo(transacao) {
+            const recibo = await consultarRecibo(operacao, transacao);
+
+            if (recibo) {
+                return recibo.resultado;
+            }
+
+            let resultado;
+
+            if (operacao.entrada.categoria === 'aluno') {
+                resultado = await gravarAluno(operacao.entrada, transacao);
+            } else {
+                resultado = await gravarRegistro(operacao, transacao);
+            }
+
+            await OperacaoRecebida.create({
+                id: operacao.id,
+                resumo: operacao.resumo,
+                resultado: resultado,
+            }, {
+                transaction: transacao,
+            });
+
+            return resultado;
         });
-        return alunos.map(apresentarAluno);
+    } catch (falha) {
+        // Recupero a confirmação quando dois pedidos iguais chegaram ao mesmo tempo.
+        if (falha instanceof UniqueConstraintError || falha.statusOperacao === 409 || falha.statusOperacao === 404) {
+            const recibo = await consultarRecibo(operacao);
+
+            if (recibo) {
+                return recibo.resultado;
+            }
+        }
+
+        throw falha;
+    }
+}
+
+export async function consultarCategoriaOnline(categoria, aparelhoId) {
+    const filtro = {};
+
+    if (categoria === 'lembrete') {
+        filtro.aparelhoId = aparelhoId;
     }
 
     const registros = await modeloDaCategoria(categoria).findAll({
+        where: filtro,
         order: [['criadoEm', 'ASC']],
     });
     return registros.map(function apresentar(registro) {
         return registro.toJSON();
     });
+}
+
+export async function verificarConexaoOnline() {
+    await banco.authenticate();
 }

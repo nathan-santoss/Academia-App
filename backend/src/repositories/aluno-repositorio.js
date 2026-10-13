@@ -1,58 +1,7 @@
-// Concentro as consultas e gravações de alunos e pessoas realizadas pelo Sequelize.
-import { Op, UniqueConstraintError } from 'sequelize';
-import banco from '../config/banco.js';
+// Consulto alunos e pessoas diretamente nos modelos do Neon.
+import { Op } from 'sequelize';
 import Pessoa from '../models/pessoa.js';
 import Aluno from '../models/aluno.js';
-
-export async function salvarAluno(dados) {
-    // Uno as gravações para não deixar uma pessoa sem perfil se o cadastro falhar.
-    const transacao = await banco.transaction();
-
-    try {
-        // Gravo os dados pessoais antes de criar o perfil que depende dessa pessoa.
-        const pessoa = await Pessoa.create({
-            nome: dados.nome,
-            cpf: dados.cpf,
-            dataNascimento: dados.dataNascimento,
-            email: dados.email,
-            telefone: dados.telefone,
-        }, {
-            transaction: transacao,
-        });
-
-        // Vinculo o aluno ao ID recém-criado e deixo o banco gerar a matrícula.
-        const aluno = await Aluno.create({
-            pessoaId: pessoa.id,
-            fotoUrl: dados.fotoUrl,
-            contatoEmergencia: dados.contatoEmergencia,
-        }, {
-            transaction: transacao,
-        });
-
-        // Junto a pessoa ao resultado para evitar uma consulta adicional.
-        aluno.pessoa = pessoa;
-        // Confirmo as duas gravações somente depois que ambas foram concluídas.
-        await transacao.commit();
-
-        return aluno;
-    } catch (falha) {
-        // Desfaço as gravações apenas se a transação ainda não foi encerrada.
-        if (!transacao.finished) {
-            await transacao.rollback();
-        }
-
-        // Reconheço o CPF pelo campo do erro, mesmo que o banco dê outro nome à restrição.
-        if (falha instanceof UniqueConstraintError && falha.fields) {
-            if (falha.fields.cpf !== undefined) {
-                // Devolvo null para o serviço informar que esse CPF já está cadastrado.
-                return null;
-            }
-        }
-
-        // Encaminho as demais falhas ao tratamento de erros do app.
-        throw falha;
-    }
-}
 
 export async function listarAlunos(filtros) {
     // Separo os filtros do perfil daqueles que pertencem aos dados pessoais.

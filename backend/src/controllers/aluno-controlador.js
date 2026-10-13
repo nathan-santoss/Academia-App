@@ -34,10 +34,6 @@ export async function cadastrarAluno(requisicao, resposta) {
     // Encaminho o corpo ao serviço e devolvo o resultado do cadastro.
     const resultado = await alunoServico.cadastrarAluno(requisicao.body, requisicao.get('Idempotency-Key'));
 
-    if (resultado.pendente) {
-        return resposta.status(202).json(resultado);
-    }
-
     // Indico com 201 que um novo cadastro foi criado.
     return responderResultado(resposta, resultado, 201);
 }

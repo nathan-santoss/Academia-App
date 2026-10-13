@@ -1,20 +1,15 @@
-// Valido os lembretes da instalação e mantenho sua persistência exclusivamente no backend.
+// Valido os lembretes da instalação e mantenho seus registros no Neon.
 import { consultarRegistros, registrarOperacao } from './persistencia-servico.js';
-import { exigirId } from '../utils/validar-id.js';
+import { exigirId, obterIdOperacao } from '../utils/validar-id.js';
 import { erroOperacao } from '../utils/erro-operacao.js';
 
 export async function listarLembretes(aparelhoId) {
-    exigirId(aparelhoId);
-    const resultado = await consultarRegistros('lembrete');
-    resultado.dados = resultado.dados.filter(function pertenceAoAparelho(registro) {
-        return registro.aparelhoId === aparelhoId && !registro.excluido;
-    });
-    return resultado;
+    return consultarRegistros('lembrete', exigirId(aparelhoId));
 }
 
 export function salvarLembrete(entrada, aparelhoId, operacaoId) {
-    exigirId(aparelhoId);
-    exigirId(operacaoId);
+    const instalacaoId = exigirId(aparelhoId);
+    const pedidoId = obterIdOperacao(operacaoId);
 
     if (!entrada || typeof entrada.titulo !== 'string' || !entrada.titulo.trim() || entrada.titulo.trim().length > 100) {
         throw erroOperacao(422, 'Informe um título com até 100 caracteres.');
@@ -24,39 +19,23 @@ export function salvarLembrete(entrada, aparelhoId, operacaoId) {
         throw erroOperacao(422, 'Informe a data e o horário do lembrete.');
     }
 
-    // Permito horários antigos na transferência de anotações já existentes, sem agendá-las novamente.
-    const dados = {
-        aparelhoId: aparelhoId,
-        titulo: entrada.titulo.trim(),
-        dataHora: new Date(entrada.dataHora).toISOString(),
-    };
-    return registrarOperacao(operacaoId, 'salvar', {
+    // Permito horários antigos na transferência de anotações já existentes.
+    return registrarOperacao(pedidoId, 'salvar', {
         categoria: 'lembrete',
-        id: operacaoId,
-        dados: dados,
-    }, Object.assign({}, dados, {
-        id: operacaoId,
-    }));
+        id: pedidoId,
+        dados: {
+            aparelhoId: instalacaoId,
+            titulo: entrada.titulo.trim(),
+            dataHora: new Date(entrada.dataHora).toISOString(),
+        },
+    });
 }
 
 export async function excluirLembrete(id, aparelhoId, operacaoId) {
-    exigirId(id);
-    exigirId(aparelhoId);
-    exigirId(operacaoId);
-    const resultado = await listarLembretes(aparelhoId);
-    const registro = resultado.dados.find(function encontrar(lembrete) {
-        return lembrete.id === id;
-    });
-
-    if (!registro) {
-        throw erroOperacao(404, 'Lembrete não encontrado nesta instalação.');
-    }
-
-    return registrarOperacao(operacaoId, 'excluir', {
+    // Confiro a instalação dentro da transação, inclusive quando o pedido é reenviado.
+    return registrarOperacao(obterIdOperacao(operacaoId), 'excluir', {
         categoria: 'lembrete',
-        id: id,
-        aparelhoId: aparelhoId,
-    }, Object.assign({}, registro, {
-        excluido: true,
-    }));
+        id: exigirId(id),
+        aparelhoId: exigirId(aparelhoId),
+    });
 }

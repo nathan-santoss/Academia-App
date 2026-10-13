@@ -1,60 +1,67 @@
 // Configuro a conexão privada do Sequelize com o PostgreSQL do Neon.
 import { Sequelize } from 'sequelize';
 
-// Exijo a conexão privada do Neon; ela não é uma senha para as requisições da API.
 if (!process.env.DATABASE_URL) {
-    throw new Error('Preencha DATABASE_URL no arquivo backend/.env.');
+    throw new Error('Configure DATABASE_URL nas variáveis de ambiente do backend.');
 }
 
 let endereco;
+let nomeBanco;
+let usuario;
+let senha;
 
 try {
-    // Interpreto a URL para separar o banco, o usuário e o endereço do servidor.
+    // Separo os dados sem permitir que uma falha imprima a URL privada.
     endereco = new URL(process.env.DATABASE_URL);
+    nomeBanco = decodeURIComponent(endereco.pathname.slice(1));
+    usuario = decodeURIComponent(endereco.username);
+    senha = decodeURIComponent(endereco.password);
 } catch {
-    // Indico um formato inválido sem mostrar a URL privada na mensagem.
-    throw new Error('Confira o formato de DATABASE_URL no .env.');
+    throw new Error('Confira o formato de DATABASE_URL nas variáveis de ambiente.');
 }
 
-// Aceito somente os protocolos usados nas conexões PostgreSQL.
 if (endereco.protocol !== 'postgres:' && endereco.protocol !== 'postgresql:') {
     throw new Error('DATABASE_URL precisa ser uma conexão PostgreSQL.');
 }
 
-// Adoto a porta padrão do PostgreSQL quando a URL não informa outra.
+if (!endereco.hostname.endsWith('.neon.tech') || !nomeBanco || !usuario || !senha || endereco.hash) {
+    throw new Error('Use a URL completa do Neon, com servidor, banco, usuário e senha.');
+}
+
 let porta = 5432;
 
 if (endereco.port) {
     porta = Number(endereco.port);
 }
 
-// Separo os dados da URL para manter a validação SSL explícita.
-const banco = new Sequelize(
-    // Recupero os valores originais caso tenham caracteres codificados na URL.
-    decodeURIComponent(endereco.pathname.slice(1)),
-    decodeURIComponent(endereco.username),
-    decodeURIComponent(endereco.password),
-    {
-        host: endereco.hostname,
-        port: porta,
-        dialect: 'postgres',
-        // Desativo a impressão das consultas para não expor dados no terminal.
-        logging: false,
-        dialectOptions: {
-            // Valido o certificado do servidor ao estabelecer a conexão criptografada.
-            ssl: {
-                rejectUnauthorized: true,
-            },
-            // Aguardo até dez segundos pela abertura de uma conexão.
-            connectionTimeoutMillis: 10000,
+if (!Number.isInteger(porta) || porta < 1 || porta > 65535) {
+    throw new Error('A porta de DATABASE_URL precisa estar entre 1 e 65535.');
+}
+
+// Defino SSL explicitamente para preservar a validação do certificado do Neon.
+const banco = new Sequelize(nomeBanco, usuario, senha, {
+    host: endereco.hostname,
+    port: porta,
+    dialect: 'postgres',
+    logging: false,
+    dialectOptions: {
+        ssl: {
+            rejectUnauthorized: true,
         },
-        // Uso sublinhados nas colunas e nomes em português nas datas dos modelos.
-        define: {
-            underscored: true,
-            createdAt: 'criadoEm',
-            updatedAt: 'atualizadoEm',
-        },
+        connectionTimeoutMillis: 10000,
+        statement_timeout: 10000,
     },
-);
+    pool: {
+        max: 5,
+        min: 0,
+        acquire: 15000,
+        idle: 10000,
+    },
+    define: {
+        underscored: true,
+        createdAt: 'criadoEm',
+        updatedAt: 'atualizadoEm',
+    },
+});
 
 export default banco;

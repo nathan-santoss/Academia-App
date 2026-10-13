@@ -1,55 +1,83 @@
-// Preparo o banco e inicio o servidor HTTP no endereço definido pelo ambiente.
+// Preparo o Neon e abro o servidor na porta fornecida pela hospedagem.
 import banco from './config/banco.js';
 import app from './aplicacao.js';
 import { criarTabelas } from './config/criar-tabelas.js';
+import { mensagemFalhaBanco } from './utils/mensagem-falha-banco.js';
+
+async function encerrarBanco() {
+    try {
+        await banco.close();
+    } catch {
+        console.error('Não foi possível encerrar as conexões com o Neon.');
+        process.exitCode = 1;
+    }
+}
 
 async function iniciarServidor() {
-    // Defino porta e endereço locais para usar quando o ambiente não os informar.
     let porta = 3000;
-    let host = '127.0.0.1';
+    let host = '0.0.0.0';
 
-    // Adoto os valores do .env quando eles foram preenchidos.
-    if (process.env.PORTA) {
+    // Priorizo PORT do Render e mantenho PORTA para ambientes já configurados.
+    if (process.env.PORT) {
+        porta = Number(process.env.PORT);
+    } else if (process.env.PORTA) {
         porta = Number(process.env.PORTA);
     }
 
-    // Permito escolher o endereço de rede pelo ambiente, inclusive para testar no celular.
-    if (process.env.HOST) {
+    if (process.env.HOST && process.env.RENDER !== 'true' && process.env.NODE_ENV !== 'production') {
         host = process.env.HOST;
     }
 
-    // Interrompo a inicialização quando a porta não é um número inteiro permitido.
     if (!Number.isInteger(porta) || porta < 1 || porta > 65535) {
-        console.error('Informe uma PORTA válida no .env.');
+        console.error('Informe PORT ou PORTA como um número inteiro entre 1 e 65535.');
         process.exitCode = 1;
         return;
     }
 
     try {
-        // Confirmo a conexão com o banco configurado no ambiente.
         await banco.authenticate();
+        console.log('Conexão com o Neon confirmada.');
 
-        // Aguardo a criação das tabelas antes de receber pedidos do frontend.
+        // Preservo as tabelas existentes e preparo as ausentes antes de receber requisições.
         await criarTabelas();
+        console.log('Tabelas do Neon preparadas.');
 
-        // Abro o atendimento HTTP somente depois que o banco estiver preparado.
         const servidor = app.listen(porta, host, function avisarInicio() {
             console.log('API disponível em http://' + host + ':' + porta + '/api/v1');
         });
 
-        // Encerro a conexão com o banco se o servidor não conseguir abrir a porta.
-        servidor.on('error', async function avisarFalha() {
-            console.error('Não foi possível abrir a porta da API.');
-            await banco.close();
+        servidor.on('error', async function avisarFalha(falha) {
+            if (falha.code === 'EADDRINUSE') {
+                console.error('A porta da API já está em uso. Confira PORT ou PORTA.');
+            } else {
+                console.error('Não foi possível abrir a API. Confira HOST e PORT.');
+            }
+
             process.exitCode = 1;
+            await encerrarBanco();
         });
-    } catch {
-        // Registro a falha de preparação sem mostrar a conexão privada do banco.
-        console.error('Não foi possível preparar o banco. Confira DATABASE_URL, a conexão e a permissão para criar tabelas no Neon.');
-        await banco.close();
+
+        // Aguardo os pedidos em andamento antes de fechar o banco durante um novo deploy.
+        let encerrando = false;
+
+        function encerrarServidor() {
+            if (encerrando) {
+                return;
+            }
+
+            encerrando = true;
+            servidor.close(async function concluirEncerramento() {
+                await encerrarBanco();
+            });
+        }
+
+        process.once('SIGTERM', encerrarServidor);
+        process.once('SIGINT', encerrarServidor);
+    } catch (falha) {
+        console.error(mensagemFalhaBanco(falha));
         process.exitCode = 1;
+        await encerrarBanco();
     }
 }
 
-// Inicio a preparação do banco e do servidor ao executar este arquivo.
 iniciarServidor();

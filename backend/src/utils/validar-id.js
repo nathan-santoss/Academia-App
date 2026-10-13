@@ -1,4 +1,5 @@
-// Confiro os UUIDs usados para relacionar registros e reconhecer reenvios da mesma operação.
+// Confiro UUIDs e gero o identificador quando o cliente não precisa controlar reenvios.
+import { randomUUID } from 'node:crypto';
 import { erroOperacao } from './erro-operacao.js';
 
 export function exigirId(valor) {
@@ -6,5 +7,14 @@ export function exigirId(valor) {
         throw erroOperacao(422, 'Informe um identificador UUID válido.');
     }
 
-    return valor;
+    return valor.toLowerCase();
+}
+
+export function obterIdOperacao(valor) {
+    // Aceito o cadastro do mobile sem exigir um cabeçalho adicional.
+    if (valor === undefined) {
+        return randomUUID();
+    }
+
+    return exigirId(valor);
 }

@@ -1,8 +1,10 @@
-// Valido os cadastros e consulto alunos pelo serviço que coordena Neon e cache do backend.
+// Valido cadastros e consulto os alunos diretamente nos repositórios do Neon.
 import { validarCadastroAluno, prepararCadastroAluno } from '../utils/validar-aluno.js';
 import { prepararConsultaAlunos } from '../utils/validar-consulta-aluno.js';
-import { consultarRegistros, registrarOperacao } from './persistencia-servico.js';
-import { exigirId } from '../utils/validar-id.js';
+import { apresentarAluno, apresentarResumoAluno } from '../utils/formatar-aluno.js';
+import { registrarOperacao } from './persistencia-servico.js';
+import * as alunos from '../repositories/aluno-repositorio.js';
+import { exigirId, obterIdOperacao } from '../utils/validar-id.js';
 import { idPessoa } from '../utils/id-pessoa.js';
 import { erroOperacao } from '../utils/erro-operacao.js';
 
@@ -13,26 +15,16 @@ export async function cadastrarAluno(entrada, operacaoId) {
         throw erroOperacao(422, mensagem);
     }
 
-    exigirId(operacaoId);
+    const id = obterIdOperacao(operacaoId);
     const dados = prepararCadastroAluno(entrada);
-    const pessoaId = idPessoa(operacaoId);
-    const previa = Object.assign({}, dados, {
-        id: operacaoId,
-        pessoaId: pessoaId,
-        matricula: null,
-        ativo: false,
-        criadoEm: null,
-        atualizadoEm: null,
-        pendenteSincronizacao: true,
-    });
 
-    // Só apresento matrícula definitiva depois da confirmação pela sequência do Neon.
-    return registrarOperacao(operacaoId, 'salvar', {
+    // Aguardo a matrícula gerada pela sequência do Neon antes de confirmar o cadastro.
+    return registrarOperacao(id, 'salvar', {
         categoria: 'aluno',
-        id: operacaoId,
-        pessoaId: pessoaId,
+        id: id,
+        pessoaId: idPessoa(id),
         dados: dados,
-    }, previa);
+    });
 }
 
 export async function listarAlunos(consulta) {
@@ -42,61 +34,25 @@ export async function listarAlunos(consulta) {
         throw erroOperacao(422, filtros.mensagem);
     }
 
-    const resultado = await consultarRegistros('aluno');
-    let busca = filtros.busca.toLowerCase();
-
-    if (/^a\d{1,19}$/.test(busca)) {
-        busca = 'a' + BigInt(busca.slice(1)).toString().padStart(6, '0');
-    }
-
-    const encontrados = resultado.dados.filter(function corresponde(aluno) {
-        if (!busca) {
-            return true;
-        }
-
-        if (/^a\d+$/.test(busca)) {
-            return aluno.matricula && aluno.matricula.toLowerCase() === busca;
-        }
-
-        return aluno.nome.toLowerCase().includes(busca);
-    });
-    const inicio = (filtros.pagina - 1) * filtros.limite;
+    // Deixo a busca e a paginação no banco para não carregar todos os cadastros.
+    const resultado = await alunos.listarAlunos(filtros);
 
     return {
-        dados: encontrados.slice(inicio, inicio + filtros.limite).map(function resumir(aluno) {
-            return {
-                id: aluno.id,
-                nome: aluno.nome,
-                matricula: aluno.matricula,
-                ativo: aluno.ativo,
-                criadoEm: aluno.criadoEm,
-                pendenteSincronizacao: aluno.pendenteSincronizacao,
-            };
-        }),
+        dados: resultado.rows.map(apresentarResumoAluno),
         pagina: filtros.pagina,
-        total: encontrados.length,
-        totalPaginas: Math.ceil(encontrados.length / filtros.limite),
-        persistencia: resultado.persistencia,
+        total: resultado.count,
+        totalPaginas: Math.ceil(resultado.count / filtros.limite),
     };
 }
 
 export async function buscarAluno(id) {
-    exigirId(id);
-    const resultado = await consultarRegistros('aluno');
-    const aluno = resultado.dados.find(function encontrar(registro) {
-        return registro.id === id;
-    });
+    const aluno = await alunos.buscarAlunoPorId(exigirId(id));
 
     if (!aluno) {
-        if (!resultado.persistencia.online) {
-            throw erroOperacao(503, 'Este cadastro não está na cópia local. Aguarde a conexão com o Neon.');
-        }
-
         throw erroOperacao(404, 'Aluno não encontrado.');
     }
 
     return {
-        dados: aluno,
-        persistencia: resultado.persistencia,
+        dados: apresentarAluno(aluno),
     };
 }

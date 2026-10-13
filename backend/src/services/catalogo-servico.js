@@ -1,7 +1,7 @@
-// Organizo o catálogo de planos e modalidades, mantendo mudanças locais pendentes até o Neon confirmar.
+// Valido planos e modalidades e aguardo a confirmação de suas mudanças no Neon.
 import { consultarRegistros, registrarOperacao } from './persistencia-servico.js';
 import { prepararCatalogo } from '../utils/validar-catalogo.js';
-import { exigirId } from '../utils/validar-id.js';
+import { exigirId, obterIdOperacao } from '../utils/validar-id.js';
 import { erroOperacao } from '../utils/erro-operacao.js';
 
 export function listarCatalogo(categoria) {
@@ -13,8 +13,8 @@ export function listarCatalogo(categoria) {
 }
 
 export async function salvarCatalogo(categoria, id, entrada, operacaoId) {
-    exigirId(id);
-    exigirId(operacaoId);
+    const registroId = exigirId(id);
+    const pedidoId = obterIdOperacao(operacaoId);
     const dados = prepararCatalogo(categoria, entrada);
     let versao = null;
 
@@ -23,16 +23,13 @@ export async function salvarCatalogo(categoria, id, entrada, operacaoId) {
             throw erroOperacao(422, 'A versão de origem é inválida.');
         }
 
-        versao = entrada.versaoAnterior;
+        versao = new Date(entrada.versaoAnterior).toISOString();
     }
 
-    return registrarOperacao(operacaoId, 'salvar', {
+    return registrarOperacao(pedidoId, 'salvar', {
         categoria: categoria,
-        id: id,
+        id: registroId,
         dados: dados,
         versaoAnterior: versao,
-    }, Object.assign({}, dados, {
-        id: id,
-        atualizadoEm: versao,
-    }));
+    });
 }

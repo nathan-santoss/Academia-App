@@ -2,6 +2,9 @@
 import express from 'express';
 import rotasAluno from './routes/aluno-rotas.js';
 import rotasAcademia from './routes/academia-rotas.js';
+import { consultarSaude } from './controllers/academia-controlador.js';
+import { falhaDeConexao } from './utils/falha-conexao.js';
+import { mensagemFalhaBanco } from './utils/mensagem-falha-banco.js';
 
 // Crio o app que reúne as configurações e as rotas da API.
 const app = express();
@@ -21,12 +24,8 @@ app.use(function evitarCache(_requisicao, resposta, proximo) {
     proximo();
 });
 
-// Disponibilizo uma rota simples para conferir se a API responde.
-app.get('/api/v1/saude', function consultarSaude(_requisicao, resposta) {
-    resposta.json({
-        mensagem: 'API disponível.',
-    });
-});
+// Confirmo que a API consegue consultar o Neon antes de sinalizar saúde ao Render.
+app.get('/api/v1/saude', consultarSaude);
 
 // Encaminho os caminhos de alunos para o arquivo responsável por essas rotas.
 app.use('/api/v1/alunos', rotasAluno);
@@ -51,6 +50,12 @@ app.use(function tratarErro(erro, _requisicao, resposta, _proximo) {
         mensagem = erro.message;
     }
 
+    if (falhaDeConexao(erro)) {
+        status = 503;
+        mensagem = 'O Neon está indisponível. Aguarde e consulte os dados antes de reenviar uma gravação.';
+        console.error(mensagemFalhaBanco(erro));
+    }
+
     // Identifico um corpo que não pode ser interpretado como JSON.
     if (erro.type === 'entity.parse.failed') {
         status = 400;
@@ -71,7 +76,7 @@ app.use(function tratarErro(erro, _requisicao, resposta, _proximo) {
 
     // Preservo os detalhes internos do banco e mostro ao cliente apenas uma mensagem.
     if (status === 500) {
-        console.error('Falha interna ao processar a requisição.');
+        console.error(mensagemFalhaBanco(erro));
     }
 
     // Entrego ao frontend o código HTTP e a mensagem escolhidos para a falha.
