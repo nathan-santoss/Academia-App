@@ -2,7 +2,6 @@
 import { createHash } from 'node:crypto';
 import { UniqueConstraintError } from 'sequelize';
 import banco from '../config/banco.js';
-import { bancoLocal, prepararPastaLocal } from '../config/banco-local.js';
 import { criarTabelas } from '../config/criar-tabelas.js';
 import RegistroCache from '../models/registro-cache.js';
 import OperacaoPendente from '../models/operacao-pendente.js';
@@ -174,19 +173,6 @@ export function registrarOperacao(id, tipo, entrada, previa) {
                     throw erroOperacao(409, 'CPF já cadastrado. A vinculação exige validação de identidade.');
                 }
             }
-
-            // Gravo a intenção e sua prévia antes de tentar o Neon; assim, uma queda não perde o pedido.
-            await bancoLocal.transaction(async function guardarIntencao(transacao) {
-                operacao = await OperacaoPendente.create({
-                    id: id,
-                    tipo: tipo,
-                    entrada: entrada,
-                    resumo: resumo,
-                }, {
-                    transaction: transacao,
-                });
-                await salvarCache(entrada.categoria, previa, true, transacao);
-            });
         }
 
         if (online) {
