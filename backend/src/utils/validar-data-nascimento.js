@@ -13,12 +13,14 @@ export function validarDataNascimento(valor) {
         return 'Informe uma data de nascimento válida.';
     }
 
-    // Recuso datas que o JavaScript ajustou para outro dia e descarto o ano zero.
+    // Comparo a data convertida com o texto original, porque o JavaScript pode ajustar 30/02 para março.
+    // Também recuso o ano zero, que não faz sentido neste cadastro.
     if (data.toISOString().slice(0, 10) !== valor || valor.startsWith('0000')) {
         return 'Informe uma data de nascimento válida.';
     }
 
     // Considero o calendário de Brasília e mantenho a data no formato ano-mês-dia.
+    // Uso sv-SE porque esse formato escreve a data como AAAA-MM-DD; o fuso continua sendo o de Brasília.
     const hoje = new Intl.DateTimeFormat('sv-SE', {
         timeZone: 'America/Sao_Paulo',
     }).format(new Date());
@@ -32,6 +34,7 @@ export function validarDataNascimento(valor) {
     let idade = Number(hoje.slice(0, 4)) - Number(valor.slice(0, 4));
 
     // Desconto um ano se o aniversário ainda não aconteceu.
+    // Comparo só mês e dia com slice(5); assim eu sei se o aniversário deste ano já passou.
     if (hoje.slice(5) < valor.slice(5)) {
         idade -= 1;
     }

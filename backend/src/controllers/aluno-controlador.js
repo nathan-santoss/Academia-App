@@ -2,7 +2,7 @@
 import * as alunoServico from '../services/aluno-servico.js';
 
 function responderResultado(resposta, resultado, statusSucesso) {
-    // Traduzo os problemas previstos em respostas HTTP, sem expor detalhes do banco.
+    // Se o serviço trouxe um erro conhecido, eu escolho uma resposta que a tela consiga entender.
     if (resultado.erro) {
         let status = 422;
 
@@ -24,14 +24,14 @@ function responderResultado(resposta, resultado, statusSucesso) {
 }
 
 export async function cadastrarAluno(requisicao, resposta) {
-    // Exijo JSON para que os campos do cadastro sejam lidos no formato esperado.
+    // Confiro com is se o pedido foi enviado como JSON, porque é esse formato que eu espero no cadastro.
     if (!requisicao.is('application/json')) {
         return resposta.status(415).json({
             mensagem: 'Envie os dados no formato JSON.',
         });
     }
 
-    // Encaminho o corpo ao serviço e devolvo o resultado do cadastro.
+    // Pego os dados em body e espero o serviço validar e salvar; o controller só organiza esse caminho.
     const resultado = await alunoServico.cadastrarAluno(requisicao.body, requisicao.get('Idempotency-Key'));
 
     // Indico com 201 que um novo cadastro foi criado.
@@ -39,7 +39,7 @@ export async function cadastrarAluno(requisicao, resposta) {
 }
 
 export async function listarAlunos(requisicao, resposta) {
-    // Passo os parâmetros da URL para a validação e a busca no serviço.
+    // Leio query para pegar valores depois do ?, como pagina=2 e busca=Ana.
     const resultado = await alunoServico.listarAlunos(requisicao.query);
 
     // Confirmo a consulta com 200 ou encaminho a mensagem de validação.
@@ -47,7 +47,7 @@ export async function listarAlunos(requisicao, resposta) {
 }
 
 export async function buscarAluno(requisicao, resposta) {
-    // Extraio o ID do caminho; o serviço decide se o cadastro foi encontrado.
+    // Pego params.id do trecho /alunos/:id e deixo a busca do cadastro por conta do serviço.
     const resultado = await alunoServico.buscarAluno(requisicao.params.id);
 
     // Apresento os dados encontrados ou a mensagem definida pelo serviço.

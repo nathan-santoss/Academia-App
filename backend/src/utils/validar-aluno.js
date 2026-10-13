@@ -8,13 +8,13 @@ function textoValido(valor, minimo, maximo) {
         return false;
     }
 
-    // Desconsidero espaços nas pontas ao conferir os limites de tamanho.
+    // Uso trim para tirar os espaços das pontas antes de contar quantas letras ficaram.
     const tamanho = valor.trim().length;
     return tamanho >= minimo && tamanho <= maximo;
 }
 
 function limparTelefone(valor) {
-    // Conservo apenas os algarismos para guardar o telefone em um formato único.
+    // Uso replace com esta expressão para tirar tudo que não é algarismo, como parênteses e hífen.
     let telefone = valor.replace(/\D/g, '');
 
     // Retiro o código do Brasil quando ele acompanha o DDD e o telefone.
@@ -69,6 +69,7 @@ function validarContato(contato) {
     }
 
     // Espero um objeto com campos nomeados, em vez de uma lista ou um texto.
+    // Uso Array.isArray porque uma lista também aparece como object no JavaScript, mas não é o contato que espero.
     if (typeof contato !== 'object' || Array.isArray(contato)) {
         return 'O contato de emergência precisa conter nome e telefone.';
     }
@@ -100,6 +101,7 @@ export function validarCadastroAluno(dados) {
     // Verifico a data e a idade mínima antes de continuar com os contatos.
     const erroData = validarDataNascimento(dados.dataNascimento);
 
+    // Paro na mensagem que veio da validação de nascimento, para não esconder esse problema com outro aviso.
     if (erroData) {
         return erroData;
     }
@@ -148,6 +150,7 @@ export function prepararCadastroAluno(dados) {
         nome: dados.nome.trim(),
         cpf: dados.cpf.replace(/\D/g, ''),
         dataNascimento: dados.dataNascimento,
+        // Tiro os espaços e deixo o e-mail em minúsculas para guardar a mesma escrita em todos os cadastros.
         email: dados.email.trim().toLowerCase(),
         telefone: limparTelefone(dados.telefone),
         fotoUrl: foto,

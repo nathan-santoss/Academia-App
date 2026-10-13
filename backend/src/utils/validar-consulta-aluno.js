@@ -26,6 +26,7 @@ export function prepararConsultaAlunos(consulta) {
             };
         }
 
+        // Converto o limite depois de conferir o texto, porque eu vou usar esse valor como número na consulta.
         limite = Number(consulta.limite);
     }
 
@@ -44,6 +45,7 @@ export function prepararConsultaAlunos(consulta) {
             };
         }
 
+        // Retiro os espaços das pontas para uma busca como ' Ana ' funcionar como 'Ana'.
         busca = consulta.busca.trim();
     }
 
@@ -53,6 +55,7 @@ export function prepararConsultaAlunos(consulta) {
         const numero = BigInt(busca.slice(1));
 
         // Recuso zero e valores acima do maior inteiro BIGINT do PostgreSQL.
+        // Uso o n no fim dos números para comparar BigInt com BigInt, sem misturar os tipos.
         if (numero < 1n || numero > 9223372036854775807n) {
             return {
                 mensagem: 'Informe uma matrícula válida.',

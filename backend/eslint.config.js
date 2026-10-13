@@ -2,6 +2,7 @@
 export default [
     {
         // Ignoro as bibliotecas instaladas para verificar apenas o código do projeto.
+        // Deixo o código das bibliotecas fora da revisão; eu só quero conferir os arquivos que mantenho no projeto.
         ignores: ['node_modules/**'],
     },
     {
@@ -22,6 +23,7 @@ export default [
         rules: {
             'no-undef': 'error',
             'no-unused-vars': ['error', {
+                // Permito parâmetros começando com _ quando preciso manter a assinatura da função, mas não uso aquele valor.
                 argsIgnorePattern: '^_',
             }],
             'no-var': 'error',
@@ -41,6 +43,7 @@ export default [
             'object-property-newline': 'error',
             // Bloqueio os operadores e laços que combinamos não usar neste projeto.
             'no-ternary': 'error',
+            // Coloco aqui as construções que combinamos evitar, para eu receber um aviso antes de entregar o código.
             'no-restricted-syntax': [
                 'error',
                 'ForStatement',

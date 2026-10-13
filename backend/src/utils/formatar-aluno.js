@@ -3,7 +3,7 @@ export function apresentarResumoAluno(aluno) {
     // Seleciono apenas os campos necessários à listagem.
     return {
         id: aluno.id,
-        // Acrescento A e zeros à esquerda para apresentar pelo menos seis dígitos.
+        // Transformo o número em texto e uso padStart para completar com zeros; por exemplo, 1 vira A000001.
         matricula: 'A' + String(aluno.numeroMatricula).padStart(6, '0'),
         nome: aluno.pessoa.nome,
         ativo: aluno.ativo,
@@ -26,5 +26,6 @@ export function apresentarAluno(aluno) {
     dados.contatoEmergencia = aluno.contatoEmergencia;
     dados.atualizadoEm = aluno.atualizadoEm;
 
+    // Devolvo o objeto completo só na consulta individual, porque a listagem usa uma versão menor.
     return dados;
 }

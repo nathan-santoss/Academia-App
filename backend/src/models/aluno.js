@@ -22,6 +22,7 @@ const Aluno = banco.define('Aluno', {
         type: DataTypes.BIGINT,
         allowNull: false,
         unique: 'alunos_matricula_unica',
+        // Peço ao PostgreSQL o próximo número da sequência, sem tentar calcular a matrícula no JavaScript.
         autoIncrement: true,
     },
     // Marco o cadastro como ativo; isso não significa plano pago ou entrada liberada.
@@ -49,6 +50,7 @@ const Aluno = banco.define('Aluno', {
 Aluno.belongsTo(Pessoa, {
     foreignKey: 'pessoaId',
     // Acesso os dados relacionados como aluno.pessoa nas consultas do repositório.
+    // Dou o apelido pessoa à relação, para conseguir ler aluno.pessoa nas consultas.
     as: 'pessoa',
     // Bloqueio a exclusão de uma pessoa que ainda possui perfil de aluno.
     onDelete: 'RESTRICT',

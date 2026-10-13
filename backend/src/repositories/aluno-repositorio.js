@@ -8,20 +8,21 @@ export async function listarAlunos(filtros) {
     const filtroAluno = {};
     const filtroPessoa = {};
 
-    // Procuro a matrícula completa quando ela foi informada no formato esperado.
+    // Uso test para ver se a busca parece uma matrícula, como A000001, antes de tratá-la como nome.
     if (/^A\d{1,19}$/i.test(filtros.busca)) {
-        // Retiro a letra A e preservo números grandes sem perder precisão.
+        // Tiro o A com slice e uso BigInt para não arredondar uma matrícula grande sem querer.
         filtroAluno.numeroMatricula = BigInt(filtros.busca.slice(1)).toString();
     } else if (filtros.busca) {
-        // Escapo os curingas para pesquisar % e _ como caracteres comuns.
+        // Coloco uma barra antes de %, _ e da própria barra, para eu buscar esses caracteres como texto.
         const nome = filtros.busca.replace(/[\\%_]/g, '\\$&');
 
         filtroPessoa.nome = {
+            // Uso iLike para procurar o nome sem diferenciar maiúsculas e minúsculas; os % permitem encontrar um trecho.
             [Op.iLike]: '%' + nome + '%',
         };
     }
 
-    // Reúno os alunos da página e a contagem total em uma chamada do Sequelize.
+    // Peço ao findAndCountAll os registros da página e o total encontrado, para montar a paginação.
     return Aluno.findAndCountAll({
         where: filtroAluno,
         // Consulto apenas os campos do resumo usado na lista, sem carregar o cadastro completo.
@@ -33,7 +34,7 @@ export async function listarAlunos(filtros) {
             where: filtroPessoa,
             attributes: ['nome'],
         }],
-        // Pulo os registros das páginas anteriores e limito o tamanho da resposta.
+        // Uso limit para escolher quantos trazer e offset para pular os alunos das páginas anteriores.
         limit: filtros.limite,
         offset: (filtros.pagina - 1) * filtros.limite,
         // Ordeno pela matrícula para manter a sequência da listagem entre páginas.
@@ -42,7 +43,7 @@ export async function listarAlunos(filtros) {
 }
 
 export async function buscarAlunoPorId(id) {
-    // Consulto o perfil junto da pessoa vinculada para obter o cadastro completo.
+    // Busco pelo ID com findByPk e uso include para trazer também a pessoa ligada a esse aluno.
     return Aluno.findByPk(id, {
         include: [{
             model: Pessoa,

@@ -7,6 +7,7 @@ const Pessoa = banco.define('Pessoa', {
     // Gero um UUID para identificar a pessoa sem usar o CPF como chave principal.
     id: {
         type: DataTypes.UUID,
+        // Peço ao Sequelize um UUID novo quando o cadastro não trouxe um ID.
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
     },
@@ -19,6 +20,7 @@ const Pessoa = banco.define('Pessoa', {
     cpf: {
         type: DataTypes.STRING(11),
         allowNull: false,
+        // Deixo a proibição de CPF repetido também no banco, para proteger até dois cadastros que chegam juntos.
         unique: 'pessoas_cpf_unico',
     },
     // Guardo apenas a data de nascimento, pois esse campo não precisa de horário.

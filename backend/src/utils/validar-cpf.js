@@ -7,12 +7,13 @@ function calcularDigito(parte) {
 
     // Multiplico cada algarismo pelo peso, diminuindo o peso a cada posição.
     while (indice < parte.length) {
+        // Converto o caractere com Number antes da multiplicação, porque eu recebi o CPF como texto.
         soma += Number(parte[indice]) * peso;
         peso -= 1;
         indice += 1;
     }
 
-    // Obtenho o resto da divisão por onze para aplicar a regra do dígito verificador.
+    // Uso % para pegar o resto da divisão por onze, que é a parte da conta usada para conferir o CPF.
     const resto = soma % 11;
 
     // Uso zero quando o resto é zero ou um.
@@ -46,8 +47,10 @@ export function cpfValido(valor) {
         return false;
     }
 
-    // Recalculo os dois dígitos finais para conferir o número recebido.
+    // Pego os primeiros nove algarismos com slice e recalculo os dois últimos para conferir o número.
+    // Com essa conta eu verifico o CPF, mas não provo a identidade de quem está usando o documento.
     const primeiro = calcularDigito(cpf.slice(0, 9));
+    // Incluo o primeiro dígito que calculei, porque a conta do segundo depende dele.
     const segundo = calcularDigito(cpf.slice(0, 9) + primeiro);
 
     // Comparo os dois últimos algarismos com os dígitos que acabei de calcular.

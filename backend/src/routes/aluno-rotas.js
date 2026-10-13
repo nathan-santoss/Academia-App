@@ -3,17 +3,17 @@ import { Router } from 'express';
 import { cadastrarAluno, listarAlunos, buscarAluno } from '../controllers/aluno-controlador.js';
 import { verificarDisponibilidadeAlunos } from '../middlewares/disponibilidade-alunos.js';
 
-// Agrupo os endereços de alunos para conectá-los ao app em um único lugar.
+// Uso Router para reunir os caminhos de alunos; o prefixo /api/v1/alunos entra lá na aplicação.
 const rotas = Router();
 
 // Respeito o bloqueio temporário em produção antes de chamar os controladores.
 rotas.use(verificarDisponibilidadeAlunos);
 
-// Direciono o envio de dados ao controlador que cadastra um aluno.
+// Associo POST / ao cadastro porque esse método representa o envio de um registro novo.
 rotas.post('/', cadastrarAluno);
 // Associo a consulta sem ID à listagem com filtros e paginação.
 rotas.get('/', listarAlunos);
-// Encaminho o ID presente na URL para a consulta individual.
+// Uso :id como um espaço na URL; o Express coloca esse valor em requisicao.params.id.
 rotas.get('/:id', buscarAluno);
 
 export default rotas;
