@@ -23,12 +23,20 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "package": "com.nathan.santosdev.academiaapp"
     },
     "plugins": [
       "expo-router",
       "expo-status-bar",
       "expo-notifications"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3440f106-1b3a-4d83-9724-7854d1e5e5f1"
+      }
+    },
+    "owner": "nathan.santosdev"
   }
 }
