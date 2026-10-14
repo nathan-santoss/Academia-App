@@ -50,9 +50,9 @@ export function AcessoProvider({ children }) {
     const encerrarLocalmente = useCallback(async function encerrarLocalmente() {
         // Apago a credencial mesmo se o sistema não conseguir remover um aviso.
         await apagarToken();
-        await apagarIdentidade();
         // Atualizo usuario no estado; o React usa o novo valor na próxima renderização.
         definirUsuario(null);
+        await apagarIdentidade();
         // Espero esta tarefa terminar antes de continuar. Peço ao sistema que retire os avisos antigos e mostro uma
         // orientação se essa limpeza falhar.
         await limparAvisos();

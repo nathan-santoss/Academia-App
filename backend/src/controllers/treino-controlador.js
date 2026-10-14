@@ -38,3 +38,11 @@ export async function consultarChegada(requisicao, resposta) {
 export async function solicitarChegada(requisicao, resposta) {
     resposta.json(await chegada.solicitarChegada(requisicao.acesso));
 }
+
+export async function iniciarDemonstracao(requisicao, resposta) {
+    resposta.json(await inicio.iniciarDemonstracao(requisicao.acesso, requisicao.body));
+}
+
+export function consultarConfiguracao(_requisicao, resposta) {
+    resposta.json(inicio.consultarConfiguracao());
+}

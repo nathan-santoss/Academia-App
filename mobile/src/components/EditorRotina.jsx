@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import SelecionarExercicio from './SelecionarExercicio';
 import { Alert, Text, View } from 'react-native';
 import Campo from './Campo';
 import Botao from './Botao';
@@ -6,6 +8,7 @@ import { novaDivisao, novoExercicio, moverItem } from '../utils/editar-rotina';
 import { estilos } from '../theme/tema';
 
 export default function EditorRotina({ rotina, aoAlterar }) {
+    const [divisaoCatalogo, definirDivisaoCatalogo] = useState('');
     function alterarDivisao(indice, divisao) {
         const divisoes = rotina.divisoes.slice();
         divisoes[indice] = divisao;
@@ -20,13 +23,13 @@ export default function EditorRotina({ rotina, aoAlterar }) {
         }));
     }
 
-    function adicionarExercicio(indice) {
+    function adicionarExercicio(indice, catalogo = null) {
         const divisao = rotina.divisoes[indice];
         if (divisao.exercicios.length >= 30) {
             Alert.alert('Limite da divisão', 'Use até 30 exercícios por divisão.');
             return;
         }
-        alterarExercicios(indice, divisao.exercicios.concat(novoExercicio()));
+        alterarExercicios(indice, divisao.exercicios.concat(novoExercicio(catalogo)));
     }
 
     function adicionarDivisao() {
@@ -98,9 +101,23 @@ export default function EditorRotina({ rotina, aoAlterar }) {
                                 />
                             );
                         })}
+                        <Botao
+                            titulo="Adicionar exercício do catálogo"
+                            desabilitado={divisao.exercicios.length >= 30}
+                            aoPressionar={function abrirCatalogo() { definirDivisaoCatalogo(divisao.id); }}
+                        />
+                        {divisaoCatalogo === divisao.id && (
+                            <SelecionarExercicio
+                                aoSelecionar={function selecionar(item) {
+                                    adicionarExercicio(indice, item);
+                                    definirDivisaoCatalogo('');
+                                }}
+                                aoCancelar={function fechar() { definirDivisaoCatalogo(''); }}
+                            />
+                        )}
                         <Text style={estilos.descricao}>Confira variação e equipamento. Exercícios repetidos são permitidos quando intencionais; prefira nomes distintos nas divisões.</Text>
                         <Botao
-                            titulo="Adicionar exercício"
+                            titulo="Adicionar exercício manualmente"
                             secundario
                             aoPressionar={function adicionar() { adicionarExercicio(indice); }}
                         />

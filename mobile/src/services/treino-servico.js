@@ -55,3 +55,17 @@ export function solicitarChegada() {
         method: 'POST',
     });
 }
+
+export function consultarConfiguracao() {
+    return solicitarApi('/treinos/configuracao');
+}
+
+export function iniciarDemonstracao(dados) {
+    return solicitarApi('/treinos/demonstracao', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados),
+    });
+}

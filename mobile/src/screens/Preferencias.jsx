@@ -130,7 +130,7 @@ export default function Preferencias() {
                 <Text style={estilos.titulo}>Sobre o aplicativo</Text>
                 {/* Apresento "Academia App · Rotinas, execu??o e hist?rico de treinos. Seus dados confirmados ficam na
                     academia." com Text para explicar esta parte da tela. */}
-                <Text style={estilos.descricao}>Academia App · Rotinas, execu??o e hist?rico de treinos. Seus dados confirmados ficam na academia.</Text>
+                <Text style={estilos.descricao}>Academia App · Rotinas, execução e histórico de treinos. Seus dados confirmados ficam no servidor.</Text>
                 {/* Monto Aviso para apresentar acesso.aviso e reaproveitar o comportamento desse componente. */}
                 <Aviso mensagem={acesso.aviso} />
                 {/* Monto Aviso para apresentar erroSaida e reaproveitar o comportamento desse componente. */}
@@ -221,6 +221,7 @@ export default function Preferencias() {
                 // Concluo os atributos de Aviso; este elemento não recebe conteúdo filho.
                 />
                 {/* Apresento "Sobre este aparelho" com Text para explicar esta parte da tela. */}
+                <Text style={estilos.descricao}>Ao sair, rascunhos de treino pendentes permanecem protegidos neste aparelho. Entre novamente na mesma conta para retomá-los e sincronizar.</Text>
                 <Text style={estilos.subtitulo}>Sobre este aparelho</Text>
                 {/* Monto Aviso para apresentar erroDispositivo e reaproveitar o comportamento desse componente. */}
                 <Aviso

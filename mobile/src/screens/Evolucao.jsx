@@ -34,7 +34,7 @@ export default function Evolucao() {
         >
             <ScrollView contentContainerStyle={estilos.conteudo}>
                 <Text style={estilos.titulo}>Meu histórico</Text>
-                <Text style={estilos.descricao}>Somente treinos confirmados pela academia. Séries pendentes aparecem na tela de execução.</Text>
+                <Text style={estilos.descricao}>Somente sessões confirmadas pelo servidor. Demonstrações são identificadas; séries pendentes aparecem na execução.</Text>
                 <Text style={estilos.texto}>{'Nesta página: ' + completos + ' completos e ' + (treinos.length - completos) + ' parciais.'}</Text>
                 {Boolean(erro) && <Text style={estilos.erro}>{erro}</Text>}
                 <Botao

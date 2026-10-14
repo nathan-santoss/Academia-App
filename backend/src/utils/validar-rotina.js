@@ -30,7 +30,7 @@ function validarExercicio(exercicio) {
     if (exercicio.observacoes) {
         observacoes = exigirTexto(exercicio.observacoes, 'observações', 500);
     }
-    return {
+    const resultado = {
         id: exigirId(exercicio.id),
         nome: exigirTexto(exercicio.nome, 'nome do exercício'),
         equipamento: exigirTexto(exercicio.equipamento, 'equipamento ou peso corporal'),
@@ -42,6 +42,10 @@ function validarExercicio(exercicio) {
         descanso: exigirNumero(exercicio.descanso, 'descanso em segundos', 0, 3600),
         observacoes: observacoes,
     };
+    if (exercicio.exercicioCatalogoId !== undefined && exercicio.exercicioCatalogoId !== null) {
+        resultado.exercicioCatalogoId = exigirId(exercicio.exercicioCatalogoId);
+    }
+    return resultado;
 }
 
 export function validarRotina(entrada) {

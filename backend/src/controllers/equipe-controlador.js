@@ -1,5 +1,3 @@
-// Recebo os pedidos das telas da equipe e passo os dados aos serviços que conferem as regras.
-// Devolvo o resultado como JSON, que o aplicativo consegue ler e mostrar na tela.
 import * as equipe from '../services/equipe-servico.js';
 import * as chegada from '../services/chegada-servico.js';
 import * as ficha from '../services/ficha-servico.js';
@@ -38,6 +36,6 @@ export async function publicarFicha(requisicao, resposta) {
 }
 
 export async function consultarExecucoes(requisicao, resposta) {
-    // Encaminho a página escolhida, mas deixo a autorização e a validação no serviço.
+
     resposta.json(await ficha.consultarExecucoes(requisicao.acesso, requisicao.params.alunoId, requisicao.query.pagina));
 }

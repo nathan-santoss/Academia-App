@@ -8,7 +8,6 @@ export function executarTransacao(acao) {
     return banco.transaction(acao);
 }
 
-// Serializo as mudanças do mesmo aluno, inclusive quando dois aparelhos iniciam juntos.
 export function bloquearAluno(alunoId, transacao) {
     return Aluno.findByPk(alunoId, {
         transaction: transacao,

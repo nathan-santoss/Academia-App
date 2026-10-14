@@ -34,7 +34,7 @@ export async function sincronizar(acesso, id, entrada) {
     }
     const operacaoId = exigirId(entrada.operacaoId);
     const revisao = exigirNumero(entrada.revisao, 'revisão', 0, 2147483646);
-    // Incluo o dono no resumo para um recibo nunca revelar a resposta de outra conta.
+
     const resumo = createHash('sha256').update(JSON.stringify({
         contaId: acesso.contaId,
         treinoId: id,
@@ -69,7 +69,7 @@ export async function sincronizar(acesso, id, entrada) {
             encerradoEm: encerradoEm,
         }, transacao);
         const resultado = treino.toJSON();
-        // Guardo cada revisão confirmada no recibo, inclusive correções e desmarcações.
+
         await repositorio.criarRecibo({
             id: operacaoId,
             resumo: resumo,

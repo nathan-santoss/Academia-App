@@ -1,5 +1,3 @@
-// Cuido da chegada de hoje: o aluno solicita, a gestão autoriza a exceção e a recepção confirma a presença.
-// Mantenho essas etapas separadas porque uma autorização sozinha não significa que o aluno chegou.
 import { randomUUID } from 'node:crypto';
 import * as repositorio from '../repositories/equipe-repositorio.js';
 import { executarTransacao, bloquearAluno } from '../repositories/treino-repositorio.js';
@@ -63,7 +61,7 @@ export async function confirmarChegada(acesso, alunoId) {
     exigirId(alunoId);
     await exigirPapel(acesso, 'recepcao');
     return executarTransacao(async function confirmar(transacao) {
-        // Confiro novamente o cadastro: ele pode ter sido desativado depois da autorização da gestão.
+
         const aluno = await bloquearAluno(alunoId, transacao);
         if (!aluno || !aluno.ativo) {
             throw erroOperacao(404, 'Aluno ativo não encontrado.');

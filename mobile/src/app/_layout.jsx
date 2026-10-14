@@ -77,6 +77,16 @@ function Telas() {
             {/* Retiro também o histórico privado quando a pessoa sai da conta. */}
             <Stack.Protected guard={Boolean(acesso.usuario)}>
                 <Stack.Screen
+                    // Relaciono esta tela ao arquivo ou grupo o texto "(menu)" que o Expo Router reconhece como rota.
+                    name="(menu)"
+                    // Agrupo as opções desta tela, como título e exibição do cabeçalho.
+                    options={{
+                        // Escolho se esta rota mostra o cabeçalho do navegador.
+                        headerShown: false,
+                    }} // Concluo este objeto com os campos que a etapa atual precisa.
+                // Concluo os atributos de Stack.Screen; este elemento não recebe conteúdo filho.
+                />
+                <Stack.Screen
                     name="treinos/rotina"
                     options={{
                         title: 'Rotina pessoal',
@@ -95,16 +105,6 @@ function Telas() {
                     }}
                 />
                 {/* Configuro esta rota pelo nome do arquivo para ela participar do Stack. */}
-                <Stack.Screen
-                    // Relaciono esta tela ao arquivo ou grupo o texto "(menu)" que o Expo Router reconhece como rota.
-                    name="(menu)"
-                    // Agrupo as opções desta tela, como título e exibição do cabeçalho.
-                    options={{
-                        // Escolho se esta rota mostra o cabeçalho do navegador.
-                        headerShown: false,
-                    }} // Concluo este objeto com os campos que a etapa atual precisa.
-                // Concluo os atributos de Stack.Screen; este elemento não recebe conteúdo filho.
-                />
                 {/* Configuro esta rota pelo nome do arquivo para ela participar do Stack. */}
                 <Stack.Screen
                     // Relaciono esta tela ao arquivo ou grupo o texto "lembretes/novo" que o Expo Router reconhece

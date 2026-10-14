@@ -1,7 +1,6 @@
 import { DataTypes } from 'sequelize';
 import banco from '../config/banco.js';
 
-// Preservo cada versão para que uma edição não reescreva o treino já realizado.
 export default banco.define('Rotina', {
     id: {
         type: DataTypes.UUID,

@@ -69,6 +69,10 @@ export default function Equipe() {
         ]);
     }
 
+    const podeBuscar = papeis.some(function autorizado(papel) {
+        return ['gestao', 'recepcao', 'instrutor'].includes(papel);
+    });
+
     return (
         <SafeAreaView
             style={estilos.tela}
@@ -80,6 +84,7 @@ export default function Equipe() {
             >
                 <Text style={estilos.titulo}>Área da equipe</Text>
                 <Text style={estilos.descricao}>{'Funções ativas: ' + papeis.join(', ')}</Text>
+                {papeis.includes('administrador') && <Text style={estilos.descricao}>Seu vínculo de Administrador está ativo. A concessão de papéis e o painel administrativo ainda não estão disponíveis. As ações operacionais exigem seus papéis específicos.</Text>}
                 <Campo
                     rotulo="Buscar aluno por nome ou matrícula"
                     value={busca}
@@ -87,7 +92,7 @@ export default function Equipe() {
                 />
                 <Botao
                     titulo="Buscar alunos"
-                    desabilitado={ocupado || papeis.length === 0}
+                    desabilitado={ocupado || !podeBuscar}
                     aoPressionar={buscar}
                 />
                 {alunos.map(function mostrar(item) {
