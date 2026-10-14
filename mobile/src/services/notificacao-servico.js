@@ -82,3 +82,9 @@ export async function consultarNotificacoes() {
 export async function cancelarNotificacao(id) {
     await Notifications.cancelScheduledNotificationAsync(identificarNotificacao(id));
 }
+
+export async function limparNotificacoes() {
+    // Retiro os avisos agendados e já exibidos para não misturar duas pessoas no mesmo celular.
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    await Notifications.dismissAllNotificationsAsync();
+}

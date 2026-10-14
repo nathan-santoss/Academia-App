@@ -7,11 +7,29 @@ import { consultarDispositivo } from '../services/dispositivo-servico';
 import Aviso from '../components/Aviso';
 import Informacao from '../components/Informacao';
 import { cores, estilos } from '../theme/tema';
+import { useAcesso } from '../contexts/AcessoContext';
+import Botao from '../components/Botao';
 
 export default function Preferencias() {
     const preferencias = usePreferencias();
+    const acesso = useAcesso();
+    const [saindo, definirSaindo] = useState(false);
+    const [erroSaida, definirErroSaida] = useState('');
     const [dispositivo, definirDispositivo] = useState(null);
     const [erroDispositivo, definirErroDispositivo] = useState('');
+
+    async function sair() {
+        // Espero a confirmação da API para encerrar também a credencial no servidor.
+        definirSaindo(true);
+        definirErroSaida('');
+        try {
+            await acesso.sair();
+        } catch (falha) {
+            definirErroSaida(falha.message);
+        } finally {
+            definirSaindo(false);
+        }
+    }
 
     // Consulto as informações uma vez, sem enviá-las à API ou ao banco de alunos.
     useEffect(function carregarDispositivo() {
@@ -53,7 +71,25 @@ export default function Preferencias() {
         >
             <ScrollView contentContainerStyle={estilos.conteudo}>
                 <Text style={estilos.etiqueta}>DO SEU JEITO</Text>
-                <Text style={estilos.titulo}>Preferências</Text>
+                <Text style={estilos.titulo}>Sobre o aplicativo</Text>
+                <Text style={estilos.descricao}>Academia App · Meu perfil e lembretes pessoais. Seus dados ficam no banco online da academia.</Text>
+                <Aviso mensagem={acesso.aviso} />
+                <Aviso
+                    mensagem={erroSaida}
+                    erro
+                />
+                <Botao
+                    titulo="Sair da minha conta"
+                    aoPressionar={sair}
+                    desabilitado={saindo}
+                    secundario
+                />
+                {saindo && (
+                    <Aviso
+                        mensagem="Encerrando acesso…"
+                        carregando
+                    />
+                )}
                 <View style={estilos.cartao}>
                     <View style={estilos.linha}>
                         <Text style={[estilos.texto, estilos.expandir]}>Vibrar ao concluir cadastro</Text>
@@ -68,7 +104,7 @@ export default function Preferencias() {
                             }}
                         />
                     </View>
-                    <Text style={estilos.descricao}>Receba uma confirmação pelo toque ao salvar um aluno ou lembrete. Sua escolha fica guardada neste aparelho.</Text>
+                    <Text style={estilos.descricao}>Receba uma confirmação pelo toque ao criar sua conta ou salvar um lembrete. Sua escolha fica guardada neste aparelho.</Text>
                 </View>
                 <Aviso
                     mensagem={mensagemPreferencia}

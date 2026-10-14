@@ -1,4 +1,4 @@
-// Consulto os lembretes online desta instalação, mostro seus avisos e permito excluir uma anotação.
+// Consulto os lembretes online da conta conectada, mostro seus avisos e permito excluir uma anotação.
 import { useCallback, useRef, useState } from 'react';
 import { Alert, FlatList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

@@ -1,16 +1,16 @@
-// Valido os lembretes da instalação e mantenho seus registros no Neon.
+// Valido os lembretes da conta e mantenho seus registros no Neon.
 import { consultarRegistros, registrarOperacao } from './persistencia-servico.js';
 import { exigirId, obterIdOperacao } from '../utils/validar-id.js';
 import { erroOperacao } from '../utils/erro-operacao.js';
 
-export async function listarLembretes(aparelhoId) {
-    // Confiro o ID do aparelho antes de buscar os lembretes, já que ele define quais registros vou consultar.
-    return consultarRegistros('lembrete', exigirId(aparelhoId));
+export async function listarLembretes(contaId) {
+    // Confiro o ID da conta recebido da sessão antes de buscar os lembretes dela.
+    return consultarRegistros('lembrete', exigirId(contaId));
 }
 
-export function salvarLembrete(entrada, aparelhoId, operacaoId) {
-    // Valido o aparelho e preparo o ID do pedido antes de montar o registro.
-    const instalacaoId = exigirId(aparelhoId);
+export function salvarLembrete(entrada, contaId, operacaoId) {
+    // Valido a conta e preparo o ID do pedido antes de montar o registro.
+    const donoId = exigirId(contaId);
     const pedidoId = obterIdOperacao(operacaoId);
 
     // Uso trim para ignorar espaços nas pontas; um título feito só de espaços não serve como lembrete.
@@ -29,7 +29,7 @@ export function salvarLembrete(entrada, aparelhoId, operacaoId) {
         // Uso o ID do pedido também no lembrete para reconhecer um reenvio da mesma criação.
         id: pedidoId,
         dados: {
-            aparelhoId: instalacaoId,
+            contaId: donoId,
             titulo: entrada.titulo.trim(),
             // Guardo o horário em texto ISO, para não depender do jeito que cada aparelho escreve uma data.
             dataHora: new Date(entrada.dataHora).toISOString(),
@@ -37,11 +37,11 @@ export function salvarLembrete(entrada, aparelhoId, operacaoId) {
     });
 }
 
-export async function excluirLembrete(id, aparelhoId, operacaoId) {
-    // Confiro a instalação dentro da transação, inclusive quando o pedido é reenviado.
+export async function excluirLembrete(id, contaId, operacaoId) {
+    // Confiro a conta dentro da transação, inclusive quando o pedido é reenviado.
     return registrarOperacao(obterIdOperacao(operacaoId), 'excluir', {
         categoria: 'lembrete',
         id: exigirId(id),
-        aparelhoId: exigirId(aparelhoId),
+        contaId: exigirId(contaId),
     });
 }

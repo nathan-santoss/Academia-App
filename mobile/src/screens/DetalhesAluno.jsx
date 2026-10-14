@@ -1,16 +1,15 @@
-// Consulto a API para exibir os dados atuais de um aluno selecionado.
+// Consulto e apresento somente o cadastro da pessoa que entrou na conta.
 import { useCallback, useState } from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import Aviso from '../components/Aviso';
 import Informacao from '../components/Informacao';
-import { buscarAluno } from '../services/aluno-servico';
+import { consultarPerfil } from '../services/acesso-servico';
 import { apresentarData, apresentarStatus, obterIniciais } from '../utils/formatar-aluno';
 import { estilos } from '../theme/tema';
 
 export default function DetalhesAluno() {
-    const { id } = useLocalSearchParams();
     const [aluno, definirAluno] = useState(null);
     const [carregando, definirCarregando] = useState(true);
     const [erro, definirErro] = useState('');
@@ -27,11 +26,8 @@ export default function DetalhesAluno() {
             definirFotoIndisponivel(false);
 
             try {
-                if (typeof id !== 'string' || !id) {
-                    throw new Error('Não foi possível identificar o aluno. Volte à lista e abra o cadastro novamente.');
-                }
-
-                const resultado = await buscarAluno(id);
+                // Deixo a API descobrir meu cadastro a partir da sessão, sem enviar um ID.
+                const resultado = await consultarPerfil();
 
                 // Descarto a resposta se o usuário já saiu desta tela.
                 if (telaAtiva) {
@@ -55,7 +51,7 @@ export default function DetalhesAluno() {
         };
         // Incluo o contador para repetir a consulta quando toco em Tentar novamente.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id, atualizacao]));
+    }, [atualizacao]));
 
     function tentarNovamente() {
         definirAtualizacao(atualizacao + 1);

@@ -1,4 +1,4 @@
-// Armazeno os lembretes no Neon e separo as anotações por instalação do aplicativo.
+// Armazeno os lembretes no Neon e separo as anotações por conta autenticada.
 import { DataTypes } from 'sequelize';
 import banco from '../config/banco.js';
 
@@ -8,8 +8,10 @@ export default banco.define('Lembrete', {
         type: DataTypes.UUID,
         primaryKey: true,
     },
-    // Associo o lembrete à instalação que o criou; esse ID organiza os dados, mas não funciona como login.
-    aparelhoId: {
+    // Associo o lembrete à conta identificada pelo servidor, sem confiar no ID enviado pelo app.
+    contaId: {
+        // Preservo o nome físico antigo da coluna para atualizar sem apagar a tabela existente.
+        field: 'aparelho_id',
         type: DataTypes.UUID,
         allowNull: false,
     },

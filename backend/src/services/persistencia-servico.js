@@ -9,10 +9,10 @@ export async function verificarConexao() {
     await verificarConexaoOnline();
 }
 
-export async function consultarRegistros(categoria, aparelhoId) {
+export async function consultarRegistros(categoria, contaId) {
     return {
         // Espero a consulta terminar para devolver os registros atuais do Neon.
-        dados: await consultarCategoriaOnline(categoria, aparelhoId),
+        dados: await consultarCategoriaOnline(categoria, contaId),
     };
 }
 

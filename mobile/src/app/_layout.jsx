@@ -1,45 +1,56 @@
-// Organizo a navegação Stack e disponibilizo as preferências para todas as telas.
+// Organizo as telas públicas e pessoais, conferindo a sessão antes de mostrar o menu.
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { cores } from '../theme/tema';
+import { View } from 'react-native';
+import { cores, estilos } from '../theme/tema';
 import { PreferenciasProvider } from '../contexts/PreferenciasContext';
+import { AcessoProvider, useAcesso } from '../contexts/AcessoContext';
 import { configurarNotificacoes } from '../services/notificacao-servico';
+import Aviso from '../components/Aviso';
 
-// Preparo a apresentação dos avisos locais mesmo com o aplicativo aberto.
+// Preparo os avisos locais sem pedir permissão durante a abertura do aplicativo.
 configurarNotificacoes();
 
-export default function Navegacao() {
-    // Compartilho o cabeçalho escuro e deixo o Router cuidar do botão de voltar.
+function Telas() {
+    const acesso = useAcesso();
+    // Aguardo a consulta inicial para não piscar dados privados ou uma tela de login desnecessária.
+    if (acesso.carregando || acesso.erroInicial) {
+        let mensagem = 'Conectando à sua conta…';
+        let tentar = null;
+        if (acesso.erroInicial) {
+            mensagem = acesso.erroInicial;
+            tentar = acesso.restaurar;
+        }
+        return (
+            <View style={[estilos.tela, estilos.conteudo]}>
+                <Aviso
+                    mensagem={mensagem}
+                    carregando={acesso.carregando}
+                    erro={Boolean(acesso.erroInicial)}
+                    aoTentar={tentar}
+                />
+            </View>
+        );
+    }
+
     return (
-        <PreferenciasProvider>
-            <StatusBar style="light" />
-            <Stack screenOptions={{
-                headerStyle: {
-                    backgroundColor: cores.fundo,
-                },
-                headerTintColor: cores.texto,
-                headerShadowVisible: false,
-                contentStyle: {
-                    backgroundColor: cores.fundo,
-                },
-            }}
-            >
+        <Stack screenOptions={{
+            headerStyle: {
+                backgroundColor: cores.fundo,
+            },
+            headerTintColor: cores.texto,
+            headerShadowVisible: false,
+            contentStyle: {
+                backgroundColor: cores.fundo,
+            },
+        }}
+        >
+            {/* Retiro também o histórico privado quando a pessoa sai da conta. */}
+            <Stack.Protected guard={Boolean(acesso.usuario)}>
                 <Stack.Screen
                     name="(menu)"
                     options={{
                         headerShown: false,
-                    }}
-                />
-                <Stack.Screen
-                    name="alunos/novo"
-                    options={{
-                        title: 'Novo aluno',
-                    }}
-                />
-                <Stack.Screen
-                    name="alunos/[id]"
-                    options={{
-                        title: 'Detalhes do aluno',
                     }}
                 />
                 <Stack.Screen
@@ -48,7 +59,33 @@ export default function Navegacao() {
                         title: 'Novo lembrete',
                     }}
                 />
-            </Stack>
+            </Stack.Protected>
+            <Stack.Protected guard={!acesso.usuario}>
+                <Stack.Screen
+                    name="entrar"
+                    options={{
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="cadastro"
+                    options={{
+                        title: 'Criar minha conta',
+                    }}
+                />
+            </Stack.Protected>
+        </Stack>
+    );
+}
+
+export default function Navegacao() {
+    // Compartilho preferências e acesso sem repetir essa preparação em cada tela.
+    return (
+        <PreferenciasProvider>
+            <AcessoProvider>
+                <StatusBar style="light" />
+                <Telas />
+            </AcessoProvider>
         </PreferenciasProvider>
     );
 }

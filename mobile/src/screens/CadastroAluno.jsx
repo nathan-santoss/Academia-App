@@ -1,4 +1,4 @@
-// Apresento o formulário de aluno e confirmo o cadastro após a resposta do backend.
+// Crio uma conta de aluno com dados pessoais e senha, confirmando somente após a resposta da API.
 import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import { useHeaderHeight } from 'expo-router/react-navigation';
 import Botao from '../components/Botao';
 import Campo from '../components/Campo';
 import Aviso from '../components/Aviso';
-import { cadastrarAluno } from '../services/aluno-servico';
+import { criarConta } from '../services/acesso-servico';
 import { criarFormularioVazio, prepararCadastro, validarFormulario } from '../utils/validar-cadastro-aluno';
 import { usePreferencias } from '../contexts/PreferenciasContext';
 import { vibrarAoConcluir } from '../utils/vibracao';
@@ -21,7 +21,9 @@ export default function CadastroAluno() {
     const [formulario, definirFormulario] = useState(criarFormularioVazio);
     const [salvando, definirSalvando] = useState(false);
     const [erro, definirErro] = useState('');
-    const [alunoSalvo, definirAlunoSalvo] = useState(null);
+    const [contaCriada, definirContaCriada] = useState(false);
+    const [senha, definirSenha] = useState('');
+    const [confirmacao, definirConfirmacao] = useState('');
     const envioEmAndamento = useRef(false);
     const telaAberta = useRef(true);
     const rolagem = useRef(null);
@@ -61,7 +63,7 @@ export default function CadastroAluno() {
 
     async function salvar() {
         // Bloqueio toques repetidos imediatamente, antes da próxima renderização.
-        if (envioEmAndamento.current || alunoSalvo) {
+        if (envioEmAndamento.current || contaCriada) {
             return;
         }
 
@@ -72,16 +74,31 @@ export default function CadastroAluno() {
             return;
         }
 
+        // Confiro a confirmação sem mandar a segunda cópia da senha para a API.
+        if (senha.length < 15 || senha.length > 128) {
+            mostrarErro('Escolha uma senha de 15 a 128 caracteres. Você pode usar uma frase.');
+            return;
+        }
+        if (senha !== confirmacao) {
+            mostrarErro('As senhas não coincidem. Confira os dois campos.');
+            return;
+        }
+
         envioEmAndamento.current = true;
         definirSalvando(true);
         definirErro('');
 
         try {
-            const resultado = await cadastrarAluno(prepararCadastro(formulario));
+            const dados = Object.assign({}, prepararCadastro(formulario), {
+                senha: senha,
+            });
+            await criarConta(dados);
 
             // Confirmo o cadastro somente depois que a API devolve o aluno salvo.
             if (telaAberta.current) {
-                definirAlunoSalvo(resultado.dados);
+                definirContaCriada(true);
+                definirSenha('');
+                definirConfirmacao('');
                 // Respeito a preferência compartilhada depois da confirmação do backend.
                 vibrarAoConcluir(vibracaoAtiva);
             }
@@ -98,22 +115,13 @@ export default function CadastroAluno() {
         }
     }
 
-    function verCadastro() {
-        // Substituo o formulário pelos detalhes para não reenviar o cadastro ao voltar.
-        router.replace({
-            pathname: '/alunos/[id]',
-            params: {
-                id: alunoSalvo.id,
-            },
-        });
+    function irParaLogin() {
+        // Troco o formulário pela entrada para não repetir a criação ao voltar.
+        router.replace('/entrar');
     }
 
-    function voltarParaLista() {
-        router.dismissTo('/');
-    }
-
-    // Mostro a matrícula recebida do banco, sem calcular nenhum número no celular.
-    if (alunoSalvo) {
+    // Confirmo a conta sem abrir uma sessão antes da conferência da senha.
+    if (contaCriada) {
         return (
             <SafeAreaView
                 style={estilos.tela}
@@ -123,25 +131,20 @@ export default function CadastroAluno() {
                     <Text style={estilos.etiqueta}>CADASTRO CONCLUÍDO</Text>
                     <Text style={estilos.titulo}>Tudo pronto!</Text>
                     <View style={estilos.cartao}>
-                        <Text style={estilos.subtitulo}>{alunoSalvo.nome}</Text>
-                        <Text style={[estilos.texto, estilos.sucesso]}>Matrícula {alunoSalvo.matricula}</Text>
-                        <Text style={estilos.descricao}>O cadastro foi salvo. Planos e fichas de treino são definidos separadamente.</Text>
+                        <Text style={estilos.subtitulo}>{formulario.nome}</Text>
+                        <Text style={estilos.descricao}>Sua conta foi criada. Entre com seu e-mail e sua senha para continuar.</Text>
                     </View>
                     <Botao
-                        titulo="Ver cadastro"
-                        aoPressionar={verCadastro}
-                    />
-                    <Botao
-                        titulo="Voltar aos alunos"
+                        titulo="Entrar na minha conta"
                         secundario
-                        aoPressionar={voltarParaLista}
+                        aoPressionar={irParaLogin}
                     />
                 </ScrollView>
             </SafeAreaView>
         );
     }
 
-    let textoBotao = 'Cadastrar aluno';
+    let textoBotao = 'Criar minha conta';
 
     if (salvando) {
         textoBotao = 'Salvando cadastro…';
@@ -184,7 +187,7 @@ export default function CadastroAluno() {
                     keyboardShouldPersistTaps="handled"
                 >
                     <Text style={estilos.etiqueta}>UM NOVO COMEÇO</Text>
-                    <Text style={estilos.titulo}>Vamos cadastrar?</Text>
+                    <Text style={estilos.titulo}>Crie sua conta</Text>
                     <Text style={estilos.descricao}>Preencha os dados abaixo. O cadastro é destinado a pessoas com 18 anos completos.</Text>
                     <Aviso
                         mensagem={erro}
@@ -222,7 +225,32 @@ export default function CadastroAluno() {
                         })}
                     </View>
                     <View style={estilos.grupo}>
-                        <Text style={estilos.subtitulo}>03 · Informações opcionais</Text>
+                        {/* Peço uma frase longa e escondo a senha durante a digitação. */}
+                        <Text style={estilos.subtitulo}>03 · Acesso</Text>
+                        <Text style={estilos.descricao}>Escolha uma senha de 15 a 128 caracteres. Use uma frase que consiga lembrar.</Text>
+                        <Campo
+                            rotulo="Senha *"
+                            value={senha}
+                            onChangeText={definirSenha}
+                            secureTextEntry
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            maxLength={128}
+                            editable={!salvando}
+                        />
+                        <Campo
+                            rotulo="Repita a senha *"
+                            value={confirmacao}
+                            onChangeText={definirConfirmacao}
+                            secureTextEntry
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            maxLength={128}
+                            editable={!salvando}
+                        />
+                    </View>
+                    <View style={estilos.grupo}>
+                        <Text style={estilos.subtitulo}>04 · Informações opcionais</Text>
                         <Text style={estilos.descricao}>Você pode deixar estes campos em branco.</Text>
                         {campo('Endereço da foto (HTTPS)', 'fotoUrl', {
                             keyboardType: 'url',

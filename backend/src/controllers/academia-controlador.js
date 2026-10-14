@@ -25,20 +25,20 @@ export async function salvarCatalogo(requisicao, resposta) {
 }
 
 export async function listarLembretes(requisicao, resposta) {
-    // Uso get para ler o cabeçalho que identifica a instalação e buscar só os lembretes dela.
-    resposta.json(await lembretes.listarLembretes(requisicao.get('X-Aparelho-ID')));
+    // Uso a conta conferida pelo login para buscar apenas os lembretes dela.
+    resposta.json(await lembretes.listarLembretes(requisicao.acesso.contaId));
 }
 
 export async function salvarLembrete(requisicao, resposta) {
     // Espero o serviço salvar antes de responder, porque eu só quero confirmar o que chegou ao Neon.
-    const resultado = await lembretes.salvarLembrete(requisicao.body, requisicao.get('X-Aparelho-ID'),
+    const resultado = await lembretes.salvarLembrete(requisicao.body, requisicao.acesso.contaId,
         requisicao.get('Idempotency-Key'));
     resposta.json(resultado);
 }
 
 export async function excluirLembrete(requisicao, resposta) {
-    // Encaminho o ID do caminho junto com o aparelho; o repositório confere o dono antes de excluir.
-    const resultado = await lembretes.excluirLembrete(requisicao.params.id, requisicao.get('X-Aparelho-ID'),
+    // Encaminho o ID junto com a conta; o repositório confere o dono antes de excluir.
+    const resultado = await lembretes.excluirLembrete(requisicao.params.id, requisicao.acesso.contaId,
         requisicao.get('Idempotency-Key'));
     resposta.json(resultado);
 }

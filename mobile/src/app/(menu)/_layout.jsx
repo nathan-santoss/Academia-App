@@ -1,4 +1,4 @@
-// Monto o menu inferior com as áreas de alunos, lembretes e preferências.
+// Monto o menu inferior com as áreas de perfil, lembretes e informações do app.
 import { Tabs } from 'expo-router/js-tabs';
 import { cores } from '../../theme/tema';
 
@@ -35,7 +35,7 @@ export default function MenuInferior() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Alunos',
+                    title: 'Meu perfil',
                 }}
             />
             <Tabs.Screen
@@ -47,7 +47,7 @@ export default function MenuInferior() {
             <Tabs.Screen
                 name="preferencias"
                 options={{
-                    title: 'Preferências',
+                    title: 'Sobre',
                 }}
             />
         </Tabs>

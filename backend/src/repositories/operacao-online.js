@@ -27,7 +27,7 @@ export function modeloDaCategoria(categoria) {
     throw erroOperacao(422, 'Categoria não reconhecida.');
 }
 
-async function gravarAluno(entrada, transacao) {
+export async function gravarAluno(entrada, transacao) {
     const dados = entrada.dados;
     // Salvo a pessoa primeiro com create, porque o perfil de aluno vai precisar do ID dela.
     const pessoa = await Pessoa.create({
@@ -65,14 +65,19 @@ async function gravarRegistro(operacao, transacao) {
         lock: transacao.LOCK.UPDATE,
     });
 
+    // Confiro a propriedade também nas tentativas de editar um ID já existente.
+    if (existente && entrada.categoria === 'lembrete' && operacao.tipo !== 'excluir' && existente.contaId !== entrada.dados.contaId) {
+        throw erroOperacao(403, 'Este lembrete pertence a outra conta.');
+    }
+
     if (operacao.tipo === 'excluir') {
-        // Confiro a instalação dona do lembrete antes de remover a anotação.
+        // Confiro a conta dona do lembrete antes de remover a anotação.
         if (!existente) {
-            throw erroOperacao(404, 'Lembrete não encontrado nesta instalação.');
+            throw erroOperacao(404, 'Lembrete não encontrado nesta conta.');
         }
 
-        if (existente.aparelhoId !== entrada.aparelhoId) {
-            throw erroOperacao(403, 'Este lembrete pertence a outra instalação.');
+        if (existente.contaId !== entrada.contaId) {
+            throw erroOperacao(403, 'Este lembrete pertence a outra conta.');
         }
 
         if (existente) {
@@ -175,12 +180,12 @@ export async function executarOperacaoOnline(operacao) {
     }
 }
 
-export async function consultarCategoriaOnline(categoria, aparelhoId) {
+export async function consultarCategoriaOnline(categoria, contaId) {
     const filtro = {};
 
     if (categoria === 'lembrete') {
-        // Filtro pelo aparelho antes da consulta, para não carregar lembretes de outras instalações.
-        filtro.aparelhoId = aparelhoId;
+        // Filtro pela conta antes da consulta, para não carregar lembretes de outras contas.
+        filtro.contaId = contaId;
     }
 
     // Uso findAll para buscar os registros desse filtro e order para manter os mais antigos primeiro.

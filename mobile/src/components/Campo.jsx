@@ -22,6 +22,7 @@ export default function Campo(propriedades) {
                 autoCorrect={propriedades.autoCorrect}
                 onSubmitEditing={propriedades.onSubmitEditing}
                 returnKeyType={propriedades.returnKeyType}
+                secureTextEntry={propriedades.secureTextEntry}
             />
         </View>
     );

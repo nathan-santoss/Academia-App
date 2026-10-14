@@ -2,6 +2,7 @@
 import express from 'express';
 import rotasAluno from './routes/aluno-rotas.js';
 import rotasAcademia from './routes/academia-rotas.js';
+import rotasAcesso from './routes/acesso-rotas.js';
 import { consultarSaude } from './controllers/academia-controlador.js';
 import { falhaDeConexao } from './utils/falha-conexao.js';
 import { mensagemFalhaBanco } from './utils/mensagem-falha-banco.js';
@@ -27,6 +28,8 @@ app.use(function evitarCache(_requisicao, resposta, proximo) {
 
 // Confirmo que a API consegue consultar o Neon antes de sinalizar saúde ao Render.
 app.get('/api/v1/saude', consultarSaude);
+// Disponibilizo o login antes das rotas protegidas por sessão.
+app.use('/api/v1/acesso', rotasAcesso);
 
 // Acrescento este prefixo aos caminhos do arquivo de rotas; o / de lá passa a atender em /api/v1/alunos.
 app.use('/api/v1/alunos', rotasAluno);
