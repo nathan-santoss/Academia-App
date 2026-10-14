@@ -1,7 +1,6 @@
 import { DataTypes } from 'sequelize';
 import banco from '../config/banco.js';
 
-// Vinculo a função a uma conta existente; o autocadastro nunca cria este registro.
 export default banco.define('Funcionario', {
     contaId: {
         type: DataTypes.UUID,

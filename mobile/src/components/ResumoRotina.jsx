@@ -2,10 +2,12 @@ import { Text, View } from 'react-native';
 import Botao from './Botao';
 import { estilos } from '../theme/tema';
 
-export default function ResumoRotina({ rotina, aoIniciar, bloqueado }) {
+export default function ResumoRotina({ rotina, aoIniciar, bloqueado, demonstrativo = false }) {
     if (!rotina) { return null; }
     let origem = 'Pessoal / adaptada pelo aluno';
     if (rotina.origem === 'recomendada') { origem = 'Recomendada pelo instrutor'; }
+    let acao = 'Iniciar ';
+    if (demonstrativo) { acao = 'Iniciar demonstração • '; }
     return (
         <View style={estilos.cartao}>
             <Text style={estilos.etiqueta}>{origem}</Text>
@@ -29,8 +31,8 @@ export default function ResumoRotina({ rotina, aoIniciar, bloqueado }) {
                             );
                         })}
                         <Botao
-                            titulo={'Iniciar ' + divisao.nome}
-                            desabilitado={bloqueado}
+                            titulo={acao + divisao.nome}
+                            desabilitado={bloqueado || divisao.exercicios.length === 0}
                             aoPressionar={function iniciar() { aoIniciar(rotina, divisao); }}
                         />
                     </View>

@@ -89,6 +89,7 @@ export default function ExecutarTreino() {
                 <Text style={estilos.titulo}>{treino.referencia.nome + ' • ' + treino.referencia.divisao.nome}</Text>
                 <Text style={estilos.descricao}>{treino.referencia.origem + ' • versão ' + treino.referencia.versao}</Text>
                 <Text style={estilos.etiqueta}>{sincronizacao}</Text>
+                {treino.referencia.modo === 'demonstracao' && <Text style={estilos.etiqueta}>Treino demonstrativo • sem presença oficial</Text>}
                 <Botao
                     titulo={modo}
                     secundario

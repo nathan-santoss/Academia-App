@@ -1,3 +1,4 @@
+import { conferirReferencias } from './exercicio-servico.js';
 import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import * as repositorio from '../repositories/treino-repositorio.js';
@@ -35,6 +36,7 @@ export async function salvarPessoal(acesso, entrada) {
         if (atual && entrada.substituir !== true) {
             throw erroOperacao(422, 'Confirme a substituição da rotina pessoal atual.');
         }
+        await conferirReferencias(conteudo, transacao);
         return repositorio.criarRotina({
             id: randomUUID(),
             alunoId: acesso.alunoId,

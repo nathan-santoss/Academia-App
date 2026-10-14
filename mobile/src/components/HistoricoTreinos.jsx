@@ -25,6 +25,7 @@ export default function HistoricoTreinos({ treinos }) {
                     >
                         <Text style={estilos.subtitulo}>{treino.referencia.nome + ' • ' + treino.referencia.divisao.nome}</Text>
                         <Text style={estilos.etiqueta}>{situacao}</Text>
+                        {treino.referencia.modo === 'demonstracao' && <Text style={estilos.etiqueta}>Demonstração • não conta como presença oficial</Text>}
                         <Text style={estilos.descricao}>{'Rotina ' + treino.referencia.origem + ' • versão ' + treino.referencia.versao}</Text>
                         <Text style={estilos.descricao}>{new Date(treino.encerradoEm).toLocaleString('pt-BR') + ' • ' + treino.series.length + ' séries realizadas'}</Text>
                         <Botao

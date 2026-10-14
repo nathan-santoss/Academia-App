@@ -80,17 +80,7 @@ export default function MenuInferior() {
             // Concluo os atributos de Tabs.Screen; este elemento não recebe conteúdo filho.
             />
             {/* Configuro o nome e a aparência desta aba no menu inferior. */}
-            <Tabs.Screen
-                // Relaciono esta tela ao arquivo ou grupo o texto "preferencias" que o Expo Router reconhece como
-                // rota.
-                name="preferencias"
-                // Agrupo as opções desta tela, como título e exibição do cabeçalho.
-                options={{
-                    // Escolho o título apresentado nesta tela, aba ou notificação.
-                    title: 'Sobre',
-                }} // Concluo este objeto com os campos que a etapa atual precisa.
-            // Concluo os atributos de Tabs.Screen; este elemento não recebe conteúdo filho.
-            />
+
             {/* Encerro o conteúdo de Tabs; os próximos elementos ficam fora deste bloco. */}
             <Tabs.Screen
                 name="evolucao"
@@ -103,6 +93,17 @@ export default function MenuInferior() {
                 options={{
                     title: 'Minha conta',
                 }}
+            />
+            <Tabs.Screen
+                // Relaciono esta tela ao arquivo ou grupo o texto "preferencias" que o Expo Router reconhece como
+                // rota.
+                name="preferencias"
+                // Agrupo as opções desta tela, como título e exibição do cabeçalho.
+                options={{
+                    // Escolho o título apresentado nesta tela, aba ou notificação.
+                    title: 'Sobre',
+                }} // Concluo este objeto com os campos que a etapa atual precisa.
+            // Concluo os atributos de Tabs.Screen; este elemento não recebe conteúdo filho.
             />
         </Tabs>
     ); // Concluo a interface devolvida por esta função para o React montar.

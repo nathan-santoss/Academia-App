@@ -4,6 +4,8 @@ import * as controlador from '../controllers/treino-controlador.js';
 
 const rotas = Router();
 rotas.use(exigirSessao);
+rotas.get('/configuracao', controlador.consultarConfiguracao);
+rotas.post('/demonstracao', controlador.iniciarDemonstracao);
 rotas.get('/rotinas', controlador.consultarRotinas);
 rotas.put('/rotinas/pessoal', controlador.salvarRotina);
 rotas.get('/ativo', controlador.consultarAtivo);

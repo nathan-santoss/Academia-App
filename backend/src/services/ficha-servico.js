@@ -1,5 +1,3 @@
-// Organizo o trabalho do instrutor: consulto a ficha, salvo o rascunho e publico uma versão para o aluno.
-// Também libero a consulta do histórico somente depois de conferir a função de quem está pedindo.
 import { randomUUID } from 'node:crypto';
 import * as fichas from '../repositories/ficha-repositorio.js';
 import * as treinos from '../repositories/treino-repositorio.js';
@@ -94,12 +92,12 @@ export async function publicarFicha(acesso, alunoId, entrada) {
 export async function consultarExecucoes(acesso, alunoId, pagina) {
     exigirId(alunoId);
     await exigirPapel(acesso, 'instrutor');
-    // Começo pelos mais recentes; avanço de vinte em vinte para não carregar todo o histórico de uma vez.
+
     let numero = 0;
     if (pagina !== undefined) {
         numero = Number(pagina);
     }
-    // Recuso páginas negativas ou fracionadas antes de montar a consulta ao banco.
+
     exigirNumero(numero, 'página', 0, 100000);
     return treinos.listarHistorico(alunoId, numero);
 }

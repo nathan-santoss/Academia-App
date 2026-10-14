@@ -8,8 +8,8 @@ export function novaDivisao() {
     };
 }
 
-export function novoExercicio() {
-    return {
+export function novoExercicio(catalogo = null) {
+    const exercicio = {
         id: randomUUID(),
         nome: '',
         equipamento: '',
@@ -21,6 +21,15 @@ export function novoExercicio() {
         descanso: '',
         observacoes: '',
     };
+    if (catalogo) {
+        return Object.assign({}, exercicio, {
+            exercicioCatalogoId: catalogo.id,
+            nome: catalogo.nome,
+            equipamento: catalogo.equipamento,
+            tipo: catalogo.tipo,
+        });
+    }
+    return exercicio;
 }
 
 export function moverItem(lista, indice, direcao) {

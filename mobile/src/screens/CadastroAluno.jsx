@@ -16,6 +16,7 @@ import { criarFormularioVazio, prepararCadastro, validarFormulario } from '../ut
 import { usePreferencias } from '../contexts/PreferenciasContext';
 import { vibrarAoConcluir } from '../utils/vibracao';
 import { preencherData } from '../utils/formatar-data';
+import { senhaNovaValida } from '../utils/validar-senha';
 import { estilos } from '../theme/tema';
 
 // Monto a criação da conta e só ofereço entrar depois da confirmação da API.
@@ -117,9 +118,9 @@ export default function CadastroAluno() {
         } // Encerro a conferência de mensagem.
 
         // Confiro a confirmação sem mandar a segunda cópia da senha para a API.
-        if (senha.length < 15 || senha.length > 128) {
+        if (!senhaNovaValida(senha)) {
             // Guardo a mensagem e, quando há referência à rolagem, levo o aviso para a parte visível do formulário.
-            mostrarErro('Escolha uma senha de 15 a 128 caracteres. Você pode usar uma frase.');
+            mostrarErro('Use pelo menos 8 caracteres e até 72 bytes UTF-8. Acentos e emojis ocupam mais de um byte.');
             // Termino esta chamada aqui para não executar os próximos passos deste caminho.
             return;
         } // Encerro a conferência de esta condição.
@@ -413,7 +414,7 @@ export default function CadastroAluno() {
                         <Text style={estilos.subtitulo}>03 · Acesso</Text>
                         {/* Apresento "Escolha uma senha de 15 a 128 caracteres. Use uma frase que consiga
                             lembrar." com Text para explicar esta parte da tela. */}
-                        <Text style={estilos.descricao}>Escolha uma senha de 15 a 128 caracteres. Use uma frase que consiga lembrar.</Text>
+                        <Text style={estilos.descricao}>Use pelo menos 8 caracteres e até 72 bytes UTF-8. Acentos e emojis ocupam mais de um byte.</Text>
                         {/* Monto Campo para apresentar o texto "Senha *" e reaproveitar o comportamento desse
                             componente. */}
                         <Campo
