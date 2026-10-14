@@ -50,7 +50,7 @@ export async function solicitarPermissao() {
 }
 
 export function identificarNotificacao(id) {
-    // Relaciono cada aviso ao registro local para conseguir cancelá-lo depois.
+    // Ligo o aviso ao código do lembrete salvo online para conseguir cancelá-lo depois.
     return 'academia-lembrete-' + id;
 }
 

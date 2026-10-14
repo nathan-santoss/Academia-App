@@ -42,10 +42,9 @@ export default function CadastroAluno() {
         }
 
         // Atualizo apenas o campo digitado e preservo os demais valores.
-        definirFormulario({
-            ...formulario,
+        definirFormulario(Object.assign({}, formulario, {
             [campo]: valor,
-        });
+        }));
     }
 
     function mostrarErro(mensagem) {
@@ -158,7 +157,11 @@ export default function CadastroAluno() {
                     alterarCampo(nome, valor);
                 }}
                 editable={!salvando}
-                {...propriedades}
+                autoCapitalize={propriedades.autoCapitalize}
+                autoCorrect={propriedades.autoCorrect}
+                keyboardType={propriedades.keyboardType}
+                maxLength={propriedades.maxLength}
+                placeholder={propriedades.placeholder}
             />
         );
     }

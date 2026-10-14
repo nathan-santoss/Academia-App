@@ -1,4 +1,4 @@
-// Listo os lembretes locais, mostro seus avisos e permito excluir uma anotação.
+// Consulto os lembretes online desta instalação, mostro seus avisos e permito excluir uma anotação.
 import { useCallback, useRef, useState } from 'react';
 import { Alert, FlatList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,9 +35,9 @@ export default function ListaLembretes() {
                 definirLembretes(resultado.dados);
                 definirAviso(resultado.aviso);
             }
-        } catch {
+        } catch (falha) {
             if (telaAtiva.current && consulta === numeroConsulta.current) {
-                definirErro('Não consegui carregar os lembretes deste aparelho.');
+                definirErro(falha.message);
             }
         } finally {
             if (telaAtiva.current && consulta === numeroConsulta.current) {
@@ -68,10 +68,14 @@ export default function ListaLembretes() {
         definirErro('');
 
         try {
-            await excluirLembrete(id);
+            const mensagem = await excluirLembrete(id);
 
             if (telaAtiva.current) {
                 atualizarLista();
+
+                if (mensagem) {
+                    Alert.alert('Confira o aviso', mensagem);
+                }
             }
         } catch {
             if (telaAtiva.current) {
@@ -144,7 +148,7 @@ export default function ListaLembretes() {
                     <View style={estilos.grupo}>
                         <Text style={estilos.etiqueta}>SUA ROTINA</Text>
                         <Text style={estilos.titulo}>Lembretes</Text>
-                        <Text style={estilos.descricao}>Suas anotações ficam neste aparelho e podem ser consultadas sem internet.</Text>
+                        <Text style={estilos.descricao}>Suas anotações ficam salvas online. Conecte-se à internet para consultar esta lista.</Text>
                         <BotaoLink
                             titulo="Novo lembrete"
                             destino="/lembretes/novo"

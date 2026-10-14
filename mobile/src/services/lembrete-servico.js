@@ -1,11 +1,22 @@
 // Coordeno a gravação dos lembretes e seus avisos, preservando anotações sem permissão de notificação.
-import { excluirLembreteSalvo, inserirLembrete, listarLembretesSalvos } from '../repositories/lembrete-repositorio.js';
+import { solicitarApi } from './api.js';
+import { obterIdInstalacao } from './instalacao-servico.js';
 import { agendarNotificacao, cancelarNotificacao, consultarNotificacoes, identificarNotificacao, solicitarPermissao } from './notificacao-servico.js';
 
-export async function cadastrarLembrete(dados, avisar) {
-    // Salvo primeiro para preservar o lembrete mesmo se a permissão for negada.
-    const lembrete = await inserirLembrete(dados);
-    let mensagem = 'Lembrete salvo neste aparelho, sem aviso.';
+export async function cadastrarLembrete(dados, avisar, pedidoId) {
+    // Espero a confirmação do Neon antes de agendar o aviso neste celular.
+    const aparelhoId = await obterIdInstalacao();
+    const resultado = await solicitarApi('/lembretes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Aparelho-ID': aparelhoId,
+            'Idempotency-Key': pedidoId,
+        },
+        body: JSON.stringify(dados),
+    });
+    const lembrete = resultado.dados;
+    let mensagem = 'Lembrete salvo online, sem aviso.';
 
     if (avisar) {
         try {
@@ -13,7 +24,7 @@ export async function cadastrarLembrete(dados, avisar) {
 
             if (permitido) {
                 await agendarNotificacao(lembrete);
-                mensagem = 'Lembrete salvo e aviso agendado neste aparelho.';
+                mensagem = 'Lembrete salvo online e aviso agendado neste aparelho.';
             } else {
                 mensagem = 'Lembrete salvo, mas sem aviso. A permissão de notificações não foi concedida.';
             }
@@ -30,7 +41,14 @@ export async function cadastrarLembrete(dados, avisar) {
 }
 
 export async function listarLembretes() {
-    const lembretes = await listarLembretesSalvos();
+    // Busco no backend só as anotações desta instalação do aplicativo.
+    const aparelhoId = await obterIdInstalacao();
+    const resultado = await solicitarApi('/lembretes', {
+        headers: {
+            'X-Aparelho-ID': aparelhoId,
+        },
+    });
+    const lembretes = resultado.dados;
     let notificacoes = [];
     let aviso = '';
 
@@ -56,10 +74,10 @@ export async function listarLembretes() {
             situacao = 'Aviso agendado';
         }
 
-        return {
-            ...lembrete,
+        // Acrescento a situação numa cópia, sem mudar os dados que vieram da API.
+        return Object.assign({}, lembrete, {
             situacao: situacao,
-        };
+        });
     });
 
     return {
@@ -69,7 +87,20 @@ export async function listarLembretes() {
 }
 
 export async function excluirLembrete(id) {
-    // Cancelo antes de apagar para não deixar um aviso futuro sem registro na lista.
-    await cancelarNotificacao(id);
-    await excluirLembreteSalvo(id);
+    // Apago no banco primeiro; se a rede falhar, mantenho o aviso já agendado.
+    const aparelhoId = await obterIdInstalacao();
+    await solicitarApi('/lembretes/' + encodeURIComponent(id), {
+        method: 'DELETE',
+        headers: {
+            'X-Aparelho-ID': aparelhoId,
+        },
+    });
+
+    try {
+        await cancelarNotificacao(id);
+        return '';
+    } catch {
+        // Distingo a exclusão concluída de uma falha ao cancelar o aviso no aparelho.
+        return 'Lembrete excluído online, mas não consegui cancelar o aviso neste aparelho.';
+    }
 }

@@ -70,9 +70,7 @@ export default function ListaAlunos() {
 
     function atualizar() {
         // Repito somente a consulta, preservando o filtro que já foi escolhido.
-        definirFiltros({
-            ...filtros,
-        });
+        definirFiltros(Object.assign({}, filtros));
     }
 
     function mudarPagina(pagina) {
@@ -84,10 +82,9 @@ export default function ListaAlunos() {
             });
         }
 
-        definirFiltros({
-            ...filtros,
+        definirFiltros(Object.assign({}, filtros, {
             pagina: pagina,
-        });
+        }));
     }
 
     function apresentarItem({ item }) {

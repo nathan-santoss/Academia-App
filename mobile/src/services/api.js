@@ -17,10 +17,9 @@ export async function solicitarApi(caminho, opcoes = {}) {
 
     try {
         // Envio as solicitações sem senha ou chave nos cabeçalhos.
-        resposta = await fetch(endereco.replace(/\/+$/, '') + caminho, {
-            ...opcoes,
+        resposta = await fetch(endereco.replace(/\/+$/, '') + caminho, Object.assign({}, opcoes, {
             signal: controle.signal,
-        });
+        }));
 
         // Leio o JSON ainda dentro do tempo de espera definido para a chamada.
         const resultado = await resposta.json();

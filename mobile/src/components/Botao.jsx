@@ -21,7 +21,7 @@ export default function Botao({ titulo, aoPressionar, desabilitado = false, secu
     // Sinalizo o toque com transparência e mantenho uma área confortável para pressionar.
     function apresentarEstilo({ pressed }) {
         if (pressed) {
-            return [...estiloBotao, estilos.pressionado];
+            return estiloBotao.concat(estilos.pressionado);
         }
 
         return estiloBotao;

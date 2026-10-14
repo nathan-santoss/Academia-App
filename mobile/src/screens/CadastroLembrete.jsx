@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { randomUUID } from 'expo-crypto';
 import { useHeaderHeight } from 'expo-router/react-navigation';
 import Aviso from '../components/Aviso';
 import Botao from '../components/Botao';
@@ -29,6 +30,8 @@ export default function CadastroLembrete() {
     const envioEmAndamento = useRef(false);
     const telaAberta = useRef(true);
     const rolagem = useRef(null);
+    // Mantenho o código do envio enquanto os dados forem os mesmos, para não duplicar uma tentativa.
+    const pedido = useRef(null);
 
     // Evito atualizar o formulário depois que a pessoa sair desta tela.
     useEffect(function acompanharTela() {
@@ -69,16 +72,25 @@ export default function CadastroLembrete() {
         definirErro('');
 
         try {
-            const salvo = await cadastrarLembrete(dados, avisar);
+            const conteudo = JSON.stringify(dados);
+
+            if (!pedido.current || pedido.current.conteudo !== conteudo) {
+                pedido.current = {
+                    id: randomUUID(),
+                    conteudo: conteudo,
+                };
+            }
+
+            const salvo = await cadastrarLembrete(dados, avisar, pedido.current.id);
 
             if (telaAberta.current) {
                 // Confirmo a gravação mesmo quando o sistema não autoriza o aviso.
                 definirResultado(salvo);
                 vibrarAoConcluir(vibracaoAtiva);
             }
-        } catch {
+        } catch (falha) {
             if (telaAberta.current) {
-                mostrarErro('Não consegui salvar o lembrete. Tente novamente.');
+                mostrarErro(falha.message);
             }
         } finally {
             envioEmAndamento.current = false;
@@ -141,7 +153,7 @@ export default function CadastroLembrete() {
                 >
                     <Text style={estilos.etiqueta}>SUA ROTINA</Text>
                     <Text style={estilos.titulo}>Novo lembrete</Text>
-                    <Text style={estilos.descricao}>Anote algo para lembrar depois. Este lembrete fica apenas neste aparelho.</Text>
+                    <Text style={estilos.descricao}>Salve sua anotação online. É preciso ter internet para salvar e consultar seus lembretes.</Text>
                     <Aviso
                         mensagem={erro}
                         erro

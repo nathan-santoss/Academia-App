@@ -16,6 +16,10 @@ mobile/android/
 *.tsbuildinfo
 *.orig.*
 *.jks
+*.keystore
+credentials.json
+*.apk
+*.aab
 *.p8
 *.p12
 *.key
