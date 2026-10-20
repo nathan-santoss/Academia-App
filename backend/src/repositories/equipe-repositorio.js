@@ -53,8 +53,8 @@ export function buscarChegada(alunoId, dia, transacao) {
     });
 }
 
-export function listarFila(dia, pagina) {
-    return Chegada.findAll({
+export async function listarFila(dia, pagina) {
+    const chegadas = await Chegada.findAll({
         where: {
             dia: dia,
             confirmadaEm: null,
@@ -62,6 +62,31 @@ export function listarFila(dia, pagina) {
         order: [['criadoEm', 'ASC'], ['id', 'ASC']],
         limit: 30,
         offset: pagina * 30,
+    });
+    const alunos = await Aluno.findAll({
+        attributes: ['id', 'numeroMatricula'],
+        where: {
+            id: chegadas.map(function aluno(chegada) { return chegada.alunoId; }),
+        },
+        include: [{
+            model: Pessoa,
+            as: 'pessoa',
+            attributes: ['nome'],
+        }],
+    });
+    return chegadas.map(function apresentar(chegada) {
+        const aluno = alunos.find(function mesmo(item) { return item.id === chegada.alunoId; });
+        let identidade = null;
+        if (aluno && aluno.pessoa) {
+            identidade = {
+                id: aluno.id,
+                nome: aluno.pessoa.nome,
+                matricula: 'A' + String(aluno.numeroMatricula).padStart(6, '0'),
+            };
+        }
+        return Object.assign({}, chegada.toJSON(), {
+            aluno: identidade,
+        });
     });
 }
 

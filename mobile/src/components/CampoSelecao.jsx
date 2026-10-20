@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { rotuloOpcao } from '../utils/opcoes-formulario';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Campo from './Campo';
@@ -25,12 +26,15 @@ export default function CampoSelecao({ rotulo, valor, opcoes, aoAlterar, permiti
             <Text style={editor.rotulo}>{rotulo}</Text>
             <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={rotulo + ': ' + texto}
+                accessibilityLabel={rotulo + ': ' + rotuloOpcao(texto)}
                 accessibilityHint="Abre as opções disponíveis"
+                accessibilityState={{
+                    expanded: aberto,
+                }}
                 onPress={function abrir() { definirAberto(true); }}
                 style={editor.seletor}
             >
-                <Text style={editor.valor}>{texto}</Text>
+                <Text style={editor.valor}>{rotuloOpcao(texto)}</Text>
                 <Text style={editor.seta}>⌄</Text>
             </Pressable>
             {permitirOutro && (personalizado || foraDasOpcoes) && (
@@ -69,8 +73,10 @@ export default function CampoSelecao({ rotulo, valor, opcoes, aoAlterar, permiti
                                         }}
                                         style={editor.opcao}
                                     >
-                                        <Text style={editor.valor}>{item}</Text>
-                                        {texto === item && <Text style={editor.seta}>✓</Text>}
+                                        <Text style={editor.valor}>{rotuloOpcao(item)}</Text>
+                                        {texto === item && (
+                                            <Text style={editor.seta}>✓</Text>
+                                        )}
                                     </Pressable>
                                 );
                             })}

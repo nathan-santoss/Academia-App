@@ -1,10 +1,109 @@
 import { test } from 'node:test';
+import { posicionarItem } from '../../mobile/src/utils/organizar-rotina.js';
+import { prepararConteudo } from '../../mobile/src/utils/validar-rotina.js';
+import { rotuloOpcao } from '../../mobile/src/utils/opcoes-formulario.js';
+import { dataDia, inicioPeriodo, hojeAcademia } from '../../mobile/src/utils/apresentar-dados.js';
 import assert from 'node:assert/strict';
 import { calcularPeriodo, estadoAssinatura, exigirDia } from '../src/utils/validar-financeiro.js';
 import { validarRotina } from '../src/utils/validar-rotina.js';
 import { validarSeries, obterEstadoTreino } from '../src/utils/validar-treino.js';
 import { interpretarResposta, normalizarEndereco } from '../../mobile/src/utils/resposta-api.js';
 import { resumirOperacao } from '../src/utils/resumir-operacao.js';
+
+function rotinaDeFormulario() {
+    return {
+        nome: 'Rotina pessoal',
+        divisoes: [{
+            id: 'c2b21eb4-1e41-4493-b0b8-e4909ee3dbb3',
+            nome: 'A',
+            exercicios: [{
+                id: '0db68dfa-d832-47da-9d04-2723d043ed03',
+                nome: 'Agachamento',
+                equipamento: 'Halteres',
+                referenciaCarga: 'por halter em kg',
+                tipo: 'repeticoes',
+                series: '3',
+                meta: '10',
+                carga: '12,5',
+                descanso: '0',
+                observacoes: '',
+            }],
+        }],
+    };
+}
+
+test('formulário produz um contrato aceito pelo backend sem modificar a edição', function conferir() {
+    const formulario = rotinaDeFormulario();
+    const conteudo = prepararConteudo(formulario);
+    assert.deepEqual(validarRotina(conteudo), conteudo);
+    assert.equal(conteudo.divisoes[0].exercicios[0].carga, 12.5);
+    assert.equal(conteudo.divisoes[0].exercicios[0].descanso, 0);
+    assert.equal(formulario.divisoes[0].exercicios[0].carga, '12,5');
+    assert.equal(formulario.divisoes[0].exercicios[0].series, '3');
+});
+
+test('carga opcional e zero são distintos; descanso vazio exige escolha explícita', function conferir() {
+    const formulario = rotinaDeFormulario();
+    const exercicio = formulario.divisoes[0].exercicios[0];
+    exercicio.carga = '';
+    assert.equal(prepararConteudo(formulario).divisoes[0].exercicios[0].carga, null);
+    exercicio.carga = '0';
+    assert.equal(prepararConteudo(formulario).divisoes[0].exercicios[0].carga, 0);
+    exercicio.descanso = '';
+    assert.throws(function vazio() { prepararConteudo(formulario); }, /Divisão 1, exercício 1.*descanso/);
+});
+
+test('formulário localiza erro de meta, séries e campos de texto antes da requisição', function conferir() {
+    const formulario = rotinaDeFormulario();
+    const exercicio = formulario.divisoes[0].exercicios[0];
+    exercicio.meta = '1,5';
+    assert.throws(function fracao() { prepararConteudo(formulario); }, /meta/);
+    exercicio.meta = '10';
+    exercicio.series = '21';
+    assert.throws(function excesso() { prepararConteudo(formulario); }, /séries/);
+    exercicio.series = '3';
+    exercicio.nome = ' ';
+    assert.throws(function nomeVazio() { prepararConteudo(formulario); }, /Divisão 1, exercício 1.*nome/);
+});
+
+test('seleção de posição preserva identidades e desloca a sequência sem trocar os demais itens', function conferir() {
+    const lista = [{
+        id: 'a',
+    }, {
+        id: 'b',
+    }, {
+        id: 'c',
+    }, {
+        id: 'd',
+    }];
+    const nova = posicionarItem(lista, 0, 2);
+    assert.deepEqual(nova.map(function id(item) { return item.id; }), ['b', 'c', 'a', 'd']);
+    assert.strictEqual(nova[2], lista[0]);
+    assert.deepEqual(lista.map(function id(item) { return item.id; }), ['a', 'b', 'c', 'd']);
+    assert.strictEqual(posicionarItem(lista, 0, 10), lista);
+    assert.strictEqual(posicionarItem(lista, -1, 0), lista);
+});
+
+test('duração mantém segundos e opção personalizada continua válida no contrato', function conferir() {
+    const formulario = rotinaDeFormulario();
+    const exercicio = formulario.divisoes[0].exercicios[0];
+    exercicio.tipo = 'duracao';
+    exercicio.meta = '45';
+    exercicio.equipamento = 'Elástico leve';
+    const conteudo = prepararConteudo(formulario);
+    assert.equal(validarRotina(conteudo).divisoes[0].exercicios[0].meta, 45);
+    assert.equal(conteudo.divisoes[0].exercicios[0].equipamento, 'Elástico leve');
+    assert.equal(conteudo.divisoes[0].exercicios[0].id, exercicio.id);
+});
+
+test('datas de negócio não retrocedem por fuso e rótulos não mudam valores enviados', function conferir() {
+    assert.equal(dataDia('2026-10-20'), '20/10/2026');
+    assert.match(hojeAcademia(), /^\d{4}-\d{2}-\d{2}$/);
+    assert.equal(inicioPeriodo(0), hojeAcademia());
+    assert.equal(rotuloOpcao('duracao'), 'Duração em segundos');
+    assert.equal(rotuloOpcao('false'), 'Não');
+    assert.equal(rotuloOpcao('35'), '35');
+});
 
 test('cinco dias gratuitos e retomada após suspensão', function conferir() {
     const assinatura = calcularPeriodo('2026-09-19', 'mensal');

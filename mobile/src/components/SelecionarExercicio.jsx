@@ -80,9 +80,15 @@ export default function SelecionarExercicio({ aoSelecionar, aoCancelar }) {
                 desabilitado={ocupado}
                 aoPressionar={pesquisar}
             />
-            {ocupado && <Text style={estilos.descricao}>Consultando exercícios…</Text>}
-            {Boolean(erro) && <Text style={estilos.erro}>{erro}</Text>}
-            {resultado && resultado.dados.length === 0 && <Text style={estilos.descricao}>Nenhum exercício encontrado. Confira os filtros ou a preparação do catálogo neste ambiente.</Text>}
+            {ocupado && (
+                <Text style={estilos.descricao}>Consultando exercícios…</Text>
+            )}
+            {Boolean(erro) && (
+                <Text style={estilos.erro}>{erro}</Text>
+            )}
+            {resultado && resultado.dados.length === 0 && (
+                <Text style={estilos.descricao}>Nenhum exercício encontrado. Confira os filtros ou a preparação do catálogo neste ambiente.</Text>
+            )}
             {resultado && resultado.dados.map(function mostrar(item) {
                 return (
                     <View
@@ -90,7 +96,12 @@ export default function SelecionarExercicio({ aoSelecionar, aoCancelar }) {
                         style={estilos.grupo}
                     >
                         <Text style={estilos.texto}>{item.nome + ' • ' + item.grupoMuscular + ' • ' + item.equipamento}</Text>
-                        {item.demonstrativo && <Text style={estilos.etiqueta}>Exemplo demonstrativo</Text>}
+                        {Boolean(item.descricao) && (
+                            <Text style={estilos.descricao}>{item.descricao}</Text>
+                        )}
+                        {item.demonstrativo && (
+                            <Text style={estilos.etiqueta}>Exemplo demonstrativo</Text>
+                        )}
                         <Botao
                             titulo={'Selecionar ' + item.nome}
                             secundario

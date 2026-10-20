@@ -10,7 +10,8 @@ export const editor = StyleSheet.create({
     },
     coluna: {
         flexGrow: 1,
-        flexBasis: 130,
+        flexBasis: 120,
+        flexShrink: 1,
         minWidth: 0,
     },
     campos: {

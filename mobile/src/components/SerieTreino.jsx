@@ -14,6 +14,7 @@ export default function SerieTreino({ exercicio, numero, serie, bloqueado, aoSal
     const [carga, definirCarga] = useState(cargaInicial);
     const [realizado, definirRealizado] = useState(realizadoInicial);
     const [erro, definirErro] = useState('');
+    const [aberto, definirAberto] = useState(!serie);
     let medida = 'Repetições realizadas';
     let titulo = 'Marcar série feita';
     if (exercicio.tipo === 'duracao') { medida = 'Segundos realizados'; }
@@ -38,34 +39,53 @@ export default function SerieTreino({ exercicio, numero, serie, bloqueado, aoSal
     return (
         <View style={estilos.cartao}>
             <Text style={estilos.subtitulo}>{'Série ' + numero}</Text>
-            {serie && <Text style={estilos.sucesso}>Marcada como feita</Text>}
-            <Campo
-                rotulo={'Carga realizada em kg — ' + exercicio.referenciaCarga}
-                value={carga}
-                onChangeText={definirCarga}
-                keyboardType="decimal-pad"
-                editable={!bloqueado}
-            />
-            <Campo
-                rotulo={medida}
-                value={realizado}
-                onChangeText={definirRealizado}
-                keyboardType="number-pad"
-                editable={!bloqueado}
-            />
-            {Boolean(erro) && <Text style={estilos.erro}>{erro}</Text>}
-            <Botao
-                titulo={titulo}
-                desabilitado={bloqueado}
-                aoPressionar={salvar}
-            />
+            {serie && (
+                <Text style={estilos.sucesso}>Marcada como feita</Text>
+            )}
             {serie && (
                 <Botao
-                    titulo="Desmarcar série"
+                    titulo="Editar esta série"
                     secundario
                     desabilitado={bloqueado}
-                    aoPressionar={aoDesmarcar}
+                    aoPressionar={function abrir() { definirAberto(!aberto); }}
                 />
+            )}
+            {serie && !aberto && (
+                <Text style={estilos.descricao}>{serie.carga + ' kg × ' + serie.realizado}</Text>
+            )}
+            {aberto && (
+                <View style={estilos.grupo}>
+                    <Campo
+                        rotulo={'Carga realizada em kg — ' + exercicio.referenciaCarga}
+                        value={carga}
+                        onChangeText={definirCarga}
+                        keyboardType="decimal-pad"
+                        editable={!bloqueado}
+                    />
+                    <Campo
+                        rotulo={medida}
+                        value={realizado}
+                        onChangeText={definirRealizado}
+                        keyboardType="number-pad"
+                        editable={!bloqueado}
+                    />
+                    {Boolean(erro) && (
+                        <Text style={estilos.erro}>{erro}</Text>
+                    )}
+                    <Botao
+                        titulo={titulo}
+                        desabilitado={bloqueado}
+                        aoPressionar={salvar}
+                    />
+                    {serie && (
+                        <Botao
+                            titulo="Desmarcar série"
+                            secundario
+                            desabilitado={bloqueado}
+                            aoPressionar={aoDesmarcar}
+                        />
+                    )}
+                </View>
             )}
         </View>
     );

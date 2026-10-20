@@ -14,6 +14,8 @@ export default function useTreino(alunoId) {
     const [tentativa, definirTentativa] = useState(0);
     const atual = useRef(null);
     const trava = useRef(false);
+    const conflito = useRef(false);
+    const [temConflito, definirTemConflito] = useState(false);
     const montado = useRef(true);
 
     const apresentar = useCallback(function apresentar(dados) {
@@ -22,7 +24,7 @@ export default function useTreino(alunoId) {
     }, []);
 
     const sincronizar = useCallback(async function sincronizar() {
-        if (trava.current || !atual.current || !atual.current.pendente) { return; }
+        if (conflito.current || trava.current || !atual.current || !atual.current.pendente) { return; }
         trava.current = true;
         definirOcupado(true);
         let continuar = false;
@@ -62,6 +64,10 @@ export default function useTreino(alunoId) {
         } catch (falha) {
             // Paro a sequência também se o armazenamento falhar. Repetir aqui sem esperar criaria um ciclo de pedidos.
             continuar = false;
+            if (falha.status === 409) {
+                conflito.current = true;
+                definirTemConflito(true);
+            }
             definirMensagem(falha.message + ' O registro local permanece protegido e pendente.');
         } finally {
             trava.current = false;
@@ -99,7 +105,19 @@ export default function useTreino(alunoId) {
                         }
                     }
                 } else {
-                    const treino = await consultarTreinoAtivo();
+                    let treino = await consultarTreinoAtivo();
+                    const inicio = await lerRascunho(alunoId, 'inicio-treino');
+                    if (!treino && inicio) {
+                        try { treino = await consultarTreino(inicio.dados.id); }
+                        catch (falha) {
+                            if (falha.status !== 404) { throw falha; }
+                            await apagarRascunho(alunoId, 'inicio-treino');
+                        }
+                    }
+                    if (treino && treino.estado !== 'ativo') {
+                        await apagarRascunho(alunoId, 'inicio-treino');
+                        treino = null;
+                    }
                     if (!montado.current) { return; }
                     if (treino) {
                         const novo = {
@@ -108,6 +126,7 @@ export default function useTreino(alunoId) {
                             descansoAte: 0,
                         };
                         await guardarRascunho(alunoId, 'treino', novo);
+                        await apagarRascunho(alunoId, 'inicio-treino');
                         if (montado.current) { apresentar(novo); }
                     }
                     definirMensagem('');
@@ -142,6 +161,7 @@ export default function useTreino(alunoId) {
     }
 
     async function registrar(series, encerrar, descansoSegundos) {
+        if (conflito.current) { definirMensagem('Resolva a divergência com o servidor antes de registrar outras séries.'); return; }
         if (trava.current || !atual.current) { return; }
         if (atual.current.encerrarPendente) {
             definirMensagem('O encerramento está pendente. Sincronize para concluir.');
@@ -201,7 +221,35 @@ export default function useTreino(alunoId) {
         }
     }
 
+    async function recuperarConfirmado() {
+        if (trava.current || !atual.current) { return; }
+        trava.current = true;
+        definirOcupado(true);
+        try {
+            const confirmado = await consultarTreino(atual.current.treino.id);
+            if (confirmado.estado !== 'ativo') {
+                await apagarRascunho(alunoId, 'treino');
+                apresentar(null);
+            } else {
+                const novo = {
+                    treino: confirmado,
+                    pendente: null,
+                    descansoAte: 0,
+                    encerrarPendente: false,
+                };
+                await guardarRascunho(alunoId, 'treino', novo);
+                apresentar(novo);
+            }
+            conflito.current = false;
+            definirTemConflito(false);
+            definirMensagem('Versão confirmada recuperada. Confira as séries antes de continuar.');
+        } catch (falha) { definirMensagem(falha.message); }
+        finally { trava.current = false; definirOcupado(false); }
+    }
+
     return {
+        temConflito,
+        recuperarConfirmado,
         rascunho,
         mensagem,
         ocupado,
