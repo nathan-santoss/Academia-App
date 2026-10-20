@@ -4,6 +4,15 @@ import Rotina from '../models/rotina.js';
 import Treino from '../models/treino.js';
 import OperacaoRecebida from '../models/operacao-recebida.js';
 
+export function bloquearOperacao(id, transacao) {
+    return banco.query('SELECT pg_advisory_xact_lock(hashtextextended(:id, 0))', {
+        replacements: {
+            id: id,
+        },
+        transaction: transacao,
+    });
+}
+
 export function executarTransacao(acao) {
     return banco.transaction(acao);
 }

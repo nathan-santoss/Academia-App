@@ -45,7 +45,7 @@ export default function Equipe() {
             const chegada = await servico.consultarChegadaAluno(aluno.id);
             let texto = 'Nenhuma solicitação ou autorização para hoje.';
             if (chegada) {
-                texto = 'Solicitação aguardando autorização da Gestão.';
+                texto = 'Solicitação aguardando confirmação presencial; a API verificará a cobertura atual.';
                 if (chegada.autorizadaEm) { texto = 'Exceção autorizada. Motivo: ' + chegada.motivo; }
                 if (chegada.confirmadaEm) { texto += ' Presença já confirmada.'; }
             }
@@ -84,7 +84,7 @@ export default function Equipe() {
             >
                 <Text style={estilos.titulo}>Área da equipe</Text>
                 <Text style={estilos.descricao}>{'Funções ativas: ' + papeis.join(', ')}</Text>
-                {papeis.includes('administrador') && <Text style={estilos.descricao}>Seu vínculo de Administrador está ativo. A concessão de papéis e o painel administrativo ainda não estão disponíveis. As ações operacionais exigem seus papéis específicos.</Text>}
+                {papeis.includes('administrador') && <Text style={estilos.descricao}>Seu vínculo de Administrador está ativo. A gestão de vínculos está disponível na API; o painel mobile ainda será integrado. As ações operacionais exigem seus papéis específicos.</Text>}
                 <Campo
                     rotulo="Buscar aluno por nome ou matrícula"
                     value={busca}

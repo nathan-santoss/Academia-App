@@ -18,6 +18,8 @@ export default [
             globals: {
 
                 console: 'readonly',
+                fetch: 'readonly',
+                AbortSignal: 'readonly',
 
                 process: 'readonly',
 
@@ -73,6 +75,8 @@ export default [
                 'ForOfStatement',
 
                 'ChainExpression',
+                'SpreadElement',
+                'RestElement',
 
                 'LogicalExpression[operator="??"]',
 

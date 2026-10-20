@@ -53,6 +53,18 @@ export function buscarChegada(alunoId, dia, transacao) {
     });
 }
 
+export function listarFila(dia, pagina) {
+    return Chegada.findAll({
+        where: {
+            dia: dia,
+            confirmadaEm: null,
+        },
+        order: [['criadoEm', 'ASC'], ['id', 'ASC']],
+        limit: 30,
+        offset: pagina * 30,
+    });
+}
+
 export function criarChegada(dados, transacao) {
     return Chegada.create(dados, {
         transaction: transacao,

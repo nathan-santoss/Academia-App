@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import Campo from './Campo';
+import CampoSelecao from './CampoSelecao';
 import Botao from './Botao';
 import { consultarExercicios } from '../services/exercicio-servico';
 import { estilos } from '../theme/tema';
@@ -53,7 +54,7 @@ export default function SelecionarExercicio({ aoSelecionar, aoCancelar }) {
     return (
         <View style={estilos.cartao}>
             <Text style={estilos.subtitulo}>Escolher exercício</Text>
-            <Text style={estilos.descricao}>Exemplos para demonstração. Escolha séries, carga e repetições por conta própria; esta lista não é uma prescrição.</Text>
+            <Text style={estilos.descricao}>Escolha a variação e o equipamento. Os parâmetros da rotina devem ser revisados; o catálogo não é uma prescrição.</Text>
             <Campo
                 rotulo="Pesquisar nome"
                 value={busca}
@@ -61,11 +62,18 @@ export default function SelecionarExercicio({ aoSelecionar, aoCancelar }) {
                 maxLength={100}
                 onSubmitEditing={pesquisar}
             />
-            <Campo
-                rotulo="Grupo muscular (opcional, por exemplo Peito)"
-                value={grupo}
-                onChangeText={definirGrupo}
-                maxLength={60}
+            <CampoSelecao
+                rotulo="Grupo muscular"
+                valor={grupo || 'Todos'}
+                opcoes={['Todos', 'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Glúteos', 'Abdômen', 'Cardio']}
+                permitirOutro
+                aoAlterar={function escolher(valor) {
+                    if (valor === 'Todos') {
+                        definirGrupo('');
+                    } else {
+                        definirGrupo(valor);
+                    }
+                }}
             />
             <Botao
                 titulo="Pesquisar / atualizar catálogo"
