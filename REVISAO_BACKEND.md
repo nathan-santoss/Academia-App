@@ -1,5 +1,7 @@
 # Revisão do backend e das rotinas
 
+> Atualização posterior: a integração mobile está descrita em [IMPLEMENTACAO_FRONTEND.md](IMPLEMENTACAO_FRONTEND.md). Este relatório preserva o retrato da etapa de backend.
+
 Data: 20/10/2026. Base funcional: Documentacao_Academia_Atualizada.pdf, versão 3.0, de 14/10/2026. Base Git: beec92a. Branch: melhorias/backend-e-rotinas.
 
 ## Resultado e limites
