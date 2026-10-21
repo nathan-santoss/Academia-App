@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import { ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import ResumoEvolucao from '../components/ResumoEvolucao';
 import HistoricoTreinos from '../components/HistoricoTreinos';
 import Botao from '../components/Botao';
 import { consultarHistorico } from '../services/treino-servico';
@@ -33,17 +34,29 @@ export default function Evolucao() {
             edges={['bottom', 'left', 'right']}
         >
             <ScrollView contentContainerStyle={estilos.conteudo}>
-                <Text style={estilos.titulo}>Meu histórico</Text>
+                <Text style={estilos.titulo}>Minha evolução</Text>
+                <ResumoEvolucao />
+                <Botao
+                    titulo="Medidas e privacidade"
+                    secundario
+                    aoPressionar={function abrir() { router.push('/medidas'); }}
+                />
+                <Text style={estilos.subtitulo}>Histórico de treinos</Text>
                 <Text style={estilos.descricao}>Somente sessões confirmadas pelo servidor. Demonstrações são identificadas; séries pendentes aparecem na execução.</Text>
                 <Text style={estilos.texto}>{'Nesta página: ' + completos + ' completos e ' + (treinos.length - completos) + ' parciais.'}</Text>
-                {Boolean(erro) && <Text style={estilos.erro}>{erro}</Text>}
+                {Boolean(erro) && (
+                    <Text style={estilos.erro}>{erro}</Text>
+                )}
                 <Botao
                     titulo="Atualizar histórico"
                     secundario
                     desabilitado={ocupado}
                     aoPressionar={function atualizar() { definirAtualizacao(atualizacao + 1); }}
                 />
-                <HistoricoTreinos treinos={treinos} />
+                <HistoricoTreinos
+                    treinos={treinos}
+                    permitirCorrecao
+                />
                 <Botao
                     titulo="Mais recentes"
                     secundario

@@ -7,6 +7,7 @@ import * as push from '../controllers/push-controlador.js';
 const rotas = Router();
 rotas.put('/notificacoes/dispositivo', exigirSessao, push.registrar);
 rotas.delete('/notificacoes/dispositivo', exigirSessao, push.remover);
+rotas.get('/funcionarios/contas', exigirSessao, controlador.buscarContasFuncionarios);
 rotas.get('/funcionarios', exigirSessao, controlador.listarFuncionarios);
 rotas.put('/funcionarios/:contaId', exigirSessao, controlador.salvarFuncionario);
 rotas.get('/modelos-treino', exigirSessao, controlador.listarModelos);

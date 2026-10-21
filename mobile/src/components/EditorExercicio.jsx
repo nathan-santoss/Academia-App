@@ -8,6 +8,7 @@ import { editor } from '../theme/editor';
 
 export default function EditorExercicio({ exercicio, aoAlterar, aoRemover, posicao, quantidade, aoReordenar }) {
     const [aberto, definirAberto] = useState(!exercicio.series);
+    const [opcionais, definirOpcionais] = useState(false);
     function alterar(nome, valor) {
         aoAlterar(Object.assign({}, exercicio, {
             [nome]: valor,
@@ -105,8 +106,23 @@ export default function EditorExercicio({ exercicio, aoAlterar, aoRemover, posic
                         {selecao(rotuloMeta, 'meta', metas, true)}
                         {selecao('Descanso (s)', 'descanso', ['0', '30', '45', '60', '90', '120', '180'], true)}
                     </View>
-                    {campo('Carga em kg (opcional)', 'carga', true)}
-                    {campo('Observações (opcional)', 'observacoes')}
+                    <Botao
+                        titulo="Carga e observações opcionais"
+                        secundario
+                        aoPressionar={function alternarOpcionais() { definirOpcionais(!opcionais); }}
+                    />
+                    {!opcionais && exercicio.carga !== null && exercicio.carga !== '' && exercicio.carga !== undefined && (
+                        <Text style={estilos.descricao}>{'Carga sugerida: ' + exercicio.carga + ' kg'}</Text>
+                    )}
+                    {!opcionais && Boolean(exercicio.observacoes) && (
+                        <Text style={estilos.descricao}>{exercicio.observacoes}</Text>
+                    )}
+                    {opcionais && (
+                        <View style={editor.grupo}>
+                            {campo('Carga em kg (opcional)', 'carga', true)}
+                            {campo('Observações (opcional)', 'observacoes')}
+                        </View>
+                    )}
                     <CampoSelecao
                         rotulo="Posição na divisão"
                         valor={String(posicao + 1)}

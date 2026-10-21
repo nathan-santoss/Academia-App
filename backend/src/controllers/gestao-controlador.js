@@ -7,6 +7,10 @@ export async function listarFuncionarios(requisicao, resposta) {
     resposta.json(await funcionarios.listar(requisicao.acesso, requisicao.query.pagina));
 }
 
+export async function buscarContasFuncionarios(requisicao, resposta) {
+    resposta.json(await funcionarios.buscarContas(requisicao.acesso, requisicao.query.busca));
+}
+
 export async function salvarFuncionario(requisicao, resposta) {
     resposta.json(await funcionarios.salvar(requisicao.acesso, requisicao.params.contaId, requisicao.body));
 }

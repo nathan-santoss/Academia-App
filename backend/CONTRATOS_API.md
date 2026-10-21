@@ -30,7 +30,8 @@ Base: /api/v1. Corpo JSON em UTF-8, limite de 1 MB. Rotas protegidas usam Author
 | GET /alunos/:id | — | Apenas o próprio aluno |
 | GET /equipe/papeis | — | Array de papéis ativos |
 | GET /equipe/alunos | busca por nome/matrícula, mínimo 2 caracteres | Instrutor/Recepção/Gestão, até 30 resultados |
-| GET /funcionarios | pagina | Gestão/Admin, vínculos existentes |
+| GET /funcionarios | pagina | Gestão/Admin, vínculos existentes, incluindo identidade com nome/matrícula |
+| GET /funcionarios/contas | busca por nome/matrícula, mínimo 2 caracteres | Gestão/Admin, até 30 contas ativas existentes; identidade e vínculo atual, sem credenciais/CPF/e-mail |
 | PUT /funcionarios/:contaId | ativo, papeis, motivo | Gestão atribui funções operacionais; somente Admin administra Gestão/Admin. Proibido alterar a própria função. Exige conta existente. |
 
 Os papéis não herdam automaticamente funções operacionais. Um administrador não vira instrutor/recepcionista por ser administrador.
@@ -65,7 +66,7 @@ Início é inclusivo e vencimento é exclusivo. Exemplo: mensal de 19/09/2026 ve
 | --- | --- | --- |
 | GET /treinos/chegada | — | Chegada própria de hoje ou null |
 | POST /treinos/chegada | — | Solicita chegada; repetir não duplica |
-| GET /equipe/chegadas | pagina | Recepção; fila de hoje ainda não confirmada |
+| GET /equipe/chegadas | pagina | Recepção; fila de hoje ainda não confirmada, incluindo aluno com id, nome e matrícula |
 | GET /equipe/alunos/:alunoId/chegada | — | Recepção |
 | POST /equipe/alunos/:alunoId/chegada | — | Recepção confirma presença física, consultando cobertura atual |
 | POST /equipe/alunos/:alunoId/excecao | motivo | Gestão autoriza somente hoje; não confirma presença |
@@ -174,7 +175,7 @@ No backend, use variáveis do ambiente de execução, seguindo .env.example. Nen
 
 npm start prepara as tabelas com sync sem force/alter. Não altera destrutivamente schemas antigos. Antes de um deploy real, confira o schema existente e as condições descritas em ../REVISAO_BACKEND.md.
 
-No mobile, EXPO_PUBLIC_API_URL deve ser o domínio público da API ou terminar em /api/v1. Login e cadastros existentes foram preservados. As novas telas administrativas/financeiras ainda precisam ser ligadas a estes contratos.
+No mobile, EXPO_PUBLIC_API_URL deve ser o domínio público da API ou terminar em /api/v1. Login e cadastros existentes foram preservados. As telas integradas, verificações e limites estão descritos em [IMPLEMENTACAO_FRONTEND.md](../IMPLEMENTACAO_FRONTEND.md).
 
 ## Testes locais
 

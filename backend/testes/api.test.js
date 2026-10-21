@@ -126,6 +126,26 @@ after(async function encerrar() {
     await banco.close();
 });
 
+test('equipe consulta identidade mínima de contas existentes com autorização', async function conferir() {
+    await requisitar('/funcionarios/contas?busca=Pessoa', pessoas.aluno, 'GET', undefined, 403);
+    await requisitar('/funcionarios/contas?busca=Pessoa', pessoas.recepcao, 'GET', undefined, 403);
+    await requisitar('/funcionarios/contas?busca=Pessoa', pessoas.instrutor, 'GET', undefined, 403);
+    await requisitar('/funcionarios/contas?busca=A', pessoas.gestao, 'GET', undefined, 422);
+    const perfil = await requisitar('/acesso/perfil', pessoas.aluno);
+    const contas = await requisitar('/funcionarios/contas?busca=' + perfil.dados.matricula, pessoas.gestao);
+    assert.equal(contas.length, 1);
+    assert.equal(contas[0].contaId, pessoas.aluno.contaId);
+    assert.equal(contas[0].nome, perfil.dados.nome);
+    assert.equal(contas[0].vinculo, null);
+    assert.equal(contas[0].email, undefined);
+    assert.equal(contas[0].cpf, undefined);
+    assert.equal(contas[0].senhaProtegida, undefined);
+    const vinculos = await requisitar('/funcionarios', pessoas.administrador);
+    assert.ok(vinculos.every(function identificado(item) {
+        return item.identidade && item.identidade.contaId === item.contaId && item.identidade.matricula.startsWith('A');
+    }));
+});
+
 test('autenticação, isolamento e JSON inválido', async function conferir() {
     await requisitar('/treinos/rotinas', null, 'GET', undefined, 401);
     await requisitar('/alunos/' + pessoas.outro.alunoId, pessoas.aluno, 'GET', undefined, 403);
@@ -405,6 +425,11 @@ test('fila só mostra pedidos não confirmados e exceção não é presença', a
     assert.equal(autorizada.confirmadaEm, null);
     const fila = await requisitar('/equipe/chegadas', pessoas.recepcao);
     assert.ok(fila.some(function pendente(item) { return item.alunoId === pessoas.outro.alunoId; }));
+    const chegada = fila.find(function encontrar(item) { return item.alunoId === pessoas.outro.alunoId; });
+    assert.equal(chegada.aluno.id, pessoas.outro.alunoId);
+    assert.equal(chegada.aluno.nome, 'Pessoa fictícia outro');
+    assert.match(chegada.aluno.matricula, /^A[0-9]+$/);
+    assert.equal(chegada.aluno.cpf, undefined);
     await requisitar('/equipe/chegadas', pessoas.aluno, 'GET', undefined, 403);
 });
 

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Text, View } from 'react-native';
+import TelaFormulario from '../components/TelaFormulario';
 import { router } from 'expo-router';
 import { useAcesso } from '../contexts/AcessoContext';
 import EditorRotina from '../components/EditorRotina';
@@ -12,6 +12,8 @@ import { estilos } from '../theme/tema';
 
 export default function RotinaPessoal() {
     const { usuario } = useAcesso();
+    const trava = useRef(false);
+    const [tentativa, definirTentativa] = useState(0);
     const [rotina, definirRotina] = useState(null);
     const [recomendada, definirRecomendada] = useState(null);
     const [ocupado, definirOcupado] = useState(false);
@@ -49,7 +51,7 @@ export default function RotinaPessoal() {
         }
         consultar();
         return function sair() { ativa = false; };
-    }, [usuario.id]);
+    }, [usuario.id, tentativa]);
 
     function editar(nova) {
         definirRotina(nova);
@@ -59,6 +61,8 @@ export default function RotinaPessoal() {
     }
 
     async function salvar() {
+        if (trava.current) { return; }
+        trava.current = true;
         definirOcupado(true);
         let protegido = false;
         try {
@@ -76,11 +80,14 @@ export default function RotinaPessoal() {
             if (protegido) { aviso = ' Seu rascunho foi mantido.'; }
             definirMensagem(falha.message + aviso);
         } finally {
+            trava.current = false;
             definirOcupado(false);
         }
     }
 
     function confirmar() {
+        try { prepararRotina(rotina); }
+        catch (falha) { definirMensagem(falha.message); return; }
         let mensagem = 'Esta rotina é criada/adaptada por você, não é uma prescrição profissional. Procure orientação presencial em caso de dúvida.';
         if (rotina.versaoAnterior > 0) {
             mensagem += ' Confirma substituir sua rotina pessoal atual? O histórico de treinos será preservado.';
@@ -154,50 +161,48 @@ export default function RotinaPessoal() {
     }
 
     return (
-        <SafeAreaView
-            style={estilos.tela}
-            edges={['bottom', 'left', 'right']}
-        >
-            <ScrollView
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={estilos.conteudo}
-            >
-                <Text style={estilos.titulo}>Minha rotina pessoal</Text>
-                <Text style={estilos.descricao}>Organize suas divisões e exercícios. A ficha do instrutor permanece separada.</Text>
-                <Text
-                    accessibilityLiveRegion="polite"
-                    style={estilos.descricao}
-                >{mensagem}</Text>
-                {rotina && (
-                    <View
-                        pointerEvents={eventos}
-                        style={estilos.grupo}
-                    >
-                        {recomendada && (
-                            <Botao
-                                titulo="Copiar rotina recomendada"
-                                secundario
-                                aoPressionar={copiar}
-                            />
-                        )}
-                        <EditorRotina
-                            rotina={rotina}
-                            aoAlterar={editar}
-                        />
+        <TelaFormulario>
+            <Text style={estilos.titulo}>Minha rotina pessoal</Text>
+            <Text style={estilos.descricao}>Organize suas divisões e exercícios. A ficha do instrutor permanece separada.</Text>
+            <Text
+                accessibilityLiveRegion="polite"
+                style={estilos.descricao}
+            >{mensagem}</Text>
+            {!rotina && (
+                <Botao
+                    titulo="Tentar carregar rotina novamente"
+                    aoPressionar={function repetir() { definirTentativa(tentativa + 1); }}
+                />
+            )}
+            {rotina && (
+                <View
+                    pointerEvents={eventos}
+                    style={estilos.grupo}
+                >
+                    {recomendada && (
                         <Botao
-                            titulo="Salvar rotina"
-                            desabilitado={ocupado}
-                            aoPressionar={confirmar}
-                        />
-                        <Botao
-                            titulo="Recuperar versão confirmada"
+                            titulo="Copiar rotina recomendada"
                             secundario
-                            desabilitado={ocupado}
-                            aoPressionar={recarregar}
+                            aoPressionar={copiar}
                         />
-                    </View>
-                )}
-            </ScrollView>
-        </SafeAreaView>
+                    )}
+                    <EditorRotina
+                        rotina={rotina}
+                        aoAlterar={editar}
+                    />
+                    <Botao
+                        titulo="Salvar rotina"
+                        desabilitado={ocupado}
+                        aoPressionar={confirmar}
+                    />
+                    <Botao
+                        titulo="Recuperar versão confirmada"
+                        secundario
+                        desabilitado={ocupado}
+                        aoPressionar={recarregar}
+                    />
+                </View>
+            )}
+        </TelaFormulario>
     );
 }

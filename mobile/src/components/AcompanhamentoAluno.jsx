@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import Botao from './Botao';
+import ResumoEvolucao from './ResumoEvolucao';
+import MedidasCompartilhadas from './MedidasCompartilhadas';
 import HistoricoTreinos from './HistoricoTreinos';
 import { consultarExecucoes } from '../services/equipe-servico';
 import { estilos } from '../theme/tema';
@@ -54,6 +56,8 @@ export default function AcompanhamentoAluno({ alunoId }) {
     return (
         <View style={estilos.grupo}>
             <Text style={estilos.subtitulo}>Acompanhamento do aluno</Text>
+            <ResumoEvolucao alunoId={alunoId} />
+            <MedidasCompartilhadas alunoId={alunoId} />
             <Text style={estilos.descricao}>Confira o que foi planejado e o que foi realizado. Treinos ainda em andamento ou sem sincronizar não aparecem neste histórico.</Text>
             <Botao
                 titulo="Atualizar acompanhamento"
@@ -61,9 +65,15 @@ export default function AcompanhamentoAluno({ alunoId }) {
                 desabilitado={ocupado}
                 aoPressionar={atualizar}
             />
-            {ocupado && <Text style={estilos.descricao}>Consultando treinos…</Text>}
-            {Boolean(erro) && <Text style={estilos.erro}>{erro}</Text>}
-            {!ocupado && !erro && <HistoricoTreinos treinos={treinos} />}
+            {ocupado && (
+                <Text style={estilos.descricao}>Consultando treinos…</Text>
+            )}
+            {Boolean(erro) && (
+                <Text style={estilos.erro}>{erro}</Text>
+            )}
+            {!ocupado && !erro && (
+                <HistoricoTreinos treinos={treinos} />
+            )}
             <Text style={estilos.descricao}>{'Página ' + (pagina + 1)}</Text>
             <Botao
                 titulo="Mais recentes"

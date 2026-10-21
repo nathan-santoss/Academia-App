@@ -12,6 +12,15 @@ export async function listar(acesso, pagina) {
     return repositorio.listar(obterPagina(pagina));
 }
 
+export async function buscarContas(acesso, busca) {
+    await exigirAlgumPapel(acesso, ['gestao', 'administrador']);
+    const texto = exigirTexto(busca, 'nome ou matrícula', 100);
+    if (texto.length < 2) {
+        throw erroOperacao(422, 'Digite pelo menos dois caracteres.');
+    }
+    return repositorio.buscarContas(texto);
+}
+
 export async function salvar(acesso, contaId, entrada) {
     exigirId(contaId);
     const papeisAtor = await exigirAlgumPapel(acesso, ['gestao', 'administrador']);
