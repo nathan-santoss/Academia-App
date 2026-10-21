@@ -1,3 +1,4 @@
+import { iniciarEntregasPush, encerrarEntregasPush } from './config/processar-push.js';
 import banco from './config/banco.js';
 import { conferirConfiguracaoJwt } from './utils/jwt.js';
 import app from './aplicacao.js';
@@ -81,6 +82,7 @@ async function iniciarServidor() {
             await encerrarBanco();
         });
 
+        const entregas = iniciarEntregasPush();
         let encerrando = false;
 
         function encerrarServidor() {
@@ -91,6 +93,7 @@ async function iniciarServidor() {
             }
 
             encerrando = true;
+            encerrarEntregasPush(entregas);
 
             servidor.close(async function concluirEncerramento() {
 

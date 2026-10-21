@@ -32,14 +32,13 @@ export function novoExercicio(catalogo = null) {
     return exercicio;
 }
 
-export function moverItem(lista, indice, direcao) {
-    const destino = indice + direcao;
-    if (destino < 0 || destino >= lista.length) {
+export function posicionarItem(lista, indice, destino) {
+    if (!Number.isInteger(indice) || !Number.isInteger(destino) || indice < 0 || indice >= lista.length || destino < 0 || destino >= lista.length) {
         return lista;
     }
     const copia = lista.slice();
-    copia[indice] = lista[destino];
-    copia[destino] = lista[indice];
+    const removidos = copia.splice(indice, 1);
+    copia.splice(destino, 0, removidos[0]);
     return copia;
 }
 

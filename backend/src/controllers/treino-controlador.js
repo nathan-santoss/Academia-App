@@ -1,3 +1,4 @@
+import { corrigir as corrigirHistorico } from '../services/correcao-treino-servico.js';
 import * as rotinas from '../services/rotina-servico.js';
 import * as execucao from '../services/execucao-treino-servico.js';
 import * as inicio from '../services/inicio-treino-servico.js';
@@ -41,6 +42,10 @@ export async function solicitarChegada(requisicao, resposta) {
 
 export async function iniciarDemonstracao(requisicao, resposta) {
     resposta.json(await inicio.iniciarDemonstracao(requisicao.acesso, requisicao.body));
+}
+
+export async function corrigir(requisicao, resposta) {
+    resposta.json(await corrigirHistorico(requisicao.acesso, requisicao.params.id, requisicao.body, requisicao.get('Idempotency-Key')));
 }
 
 export function consultarConfiguracao(_requisicao, resposta) {

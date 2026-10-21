@@ -1,96 +1,66 @@
 import { Sequelize } from 'sequelize';
 
-if (!process.env.DATABASE_URL) {
-
+let conexao = process.env.DATABASE_URL;
+const emTeste = process.env.NODE_ENV === 'test' && Boolean(process.env.DATABASE_URL_TESTE);
+if (emTeste) {
+    conexao = process.env.DATABASE_URL_TESTE;
+}
+if (!conexao) {
     throw new Error('Configure DATABASE_URL nas variáveis de ambiente do backend.');
 }
-
 let endereco;
-
-let nomeBanco;
-
-let usuario;
-
-let senha;
-
 try {
-
-    endereco = new URL(process.env.DATABASE_URL);
-
-    nomeBanco = decodeURIComponent(endereco.pathname.slice(1));
-
-    usuario = decodeURIComponent(endereco.username);
-
-    senha = decodeURIComponent(endereco.password);
-
+    endereco = new URL(conexao);
 } catch {
-
-    throw new Error('Confira o formato de DATABASE_URL nas variáveis de ambiente.');
+    throw new Error('Confira o formato da conexão PostgreSQL nas variáveis de ambiente.');
 }
-
-if (endereco.protocol !== 'postgres:' && endereco.protocol !== 'postgresql:') {
-
-    throw new Error('DATABASE_URL precisa ser uma conexão PostgreSQL.');
+if (!['postgres:', 'postgresql:'].includes(endereco.protocol)) {
+    throw new Error('A conexão precisa usar PostgreSQL.');
 }
-
-if (!endereco.hostname.endsWith('.neon.tech') || !nomeBanco || !usuario || !senha || endereco.hash) {
-
+const nomeBanco = decodeURIComponent(endereco.pathname.slice(1));
+const usuario = decodeURIComponent(endereco.username);
+const senha = decodeURIComponent(endereco.password);
+if (emTeste) {
+    // Restrinjo os testes a uma base local identificada, sem permitir o Neon de produção.
+    if (!['localhost', '127.0.0.1'].includes(endereco.hostname) || !nomeBanco.startsWith('academia_teste')) {
+        throw new Error('DATABASE_URL_TESTE deve apontar para academia_teste em localhost.');
+    }
+} else if (!endereco.hostname.endsWith('.neon.tech') || !senha) {
     throw new Error('Use a URL completa do Neon, com servidor, banco, usuário e senha.');
 }
-
+if (!nomeBanco || !usuario || endereco.hash) {
+    throw new Error('Informe banco e usuário válidos na conexão PostgreSQL.');
+}
 let porta = 5432;
-
 if (endereco.port) {
-
     porta = Number(endereco.port);
 }
-
-if (!Number.isInteger(porta) || porta < 1 || porta > 65535) {
-
-    throw new Error('A porta de DATABASE_URL precisa estar entre 1 e 65535.');
+let ssl = false;
+if (!emTeste) {
+    ssl = {
+        rejectUnauthorized: true,
+    };
 }
-
 const banco = new Sequelize(nomeBanco, usuario, senha, {
-
     host: endereco.hostname,
-
     port: porta,
-
     dialect: 'postgres',
-
     logging: false,
-
     dialectOptions: {
-
-        ssl: {
-
-            rejectUnauthorized: true,
-        },
-
+        ssl: ssl,
         connectionTimeoutMillis: 10000,
-
         statement_timeout: 10000,
     },
-
     pool: {
-
         max: 5,
-
         min: 0,
-
         acquire: 15000,
-
         idle: 10000,
     },
-
     define: {
-
         underscored: true,
-
         createdAt: 'criadoEm',
-
         updatedAt: 'atualizadoEm',
     },
 });
-
 export default banco;

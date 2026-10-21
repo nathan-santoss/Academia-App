@@ -23,6 +23,18 @@ export function atualizarRascunho(rascunho, dados, transacao) {
     });
 }
 
+export function listarPublicacoes(alunoId, pagina) {
+    return Rotina.findAll({
+        where: {
+            alunoId: alunoId,
+            origem: 'recomendada',
+        },
+        order: [['versao', 'DESC']],
+        limit: 30,
+        offset: pagina * 30,
+    });
+}
+
 export function buscarPublicacao(id, transacao) {
     return Rotina.findByPk(id, {
         transaction: transacao,

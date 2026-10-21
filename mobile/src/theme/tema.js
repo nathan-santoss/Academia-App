@@ -38,9 +38,9 @@ export const estilos = StyleSheet.create({
     // Reúno os estilos de o espaço de leitura e os formulários para as telas usarem o mesmo padrão.
     conteudo: {
         // Reservo este espaço por dentro da borda para o conteúdo não ficar encostado.
-        padding: 24,
+        padding: 16,
         // Separo os elementos filhos por este espaço, sem acrescentar margens em cada um.
-        gap: 20,
+        gap: 14,
         // Defino a largura deste elemento para manter o tamanho previsto no layout.
         width: '100%',
         // Limito a largura em telas grandes para não esticar demais os formulários.
@@ -83,7 +83,7 @@ export const estilos = StyleSheet.create({
         // Escolho a cor do texto a partir da paleta para manter o mesmo padrão nas telas.
         color: cores.texto,
         // Defino o tamanho da letra para diferenciar este texto dos demais.
-        fontSize: 32,
+        fontSize: 26,
         // Escolho o peso da letra; números maiores deixam o texto mais forte.
         fontWeight: '700',
     }, // Concluo os campos de titulo e volto ao objeto que reúne essa configuração.
@@ -125,7 +125,7 @@ export const estilos = StyleSheet.create({
         // Arredondo os cantos deste elemento para manter o padrão visual.
         borderRadius: 16,
         // Reservo este espaço por dentro da borda para o conteúdo não ficar encostado.
-        padding: 20,
+        padding: 14,
         // Separo os elementos filhos por este espaço, sem acrescentar margens em cada um.
         gap: 12,
     }, // Concluo os campos de cartao e volto ao objeto que reúne essa configuração.
@@ -142,18 +142,18 @@ export const estilos = StyleSheet.create({
         // Arredondo os cantos deste elemento para manter o padrão visual.
         borderRadius: 12,
         // Garanto uma altura mínima para o campo ou botão continuar confortável de tocar.
-        minHeight: 52,
+        minHeight: 44,
         // Afasto o conteúdo das bordas esquerda e direita.
         paddingHorizontal: 16,
         // Afasto o conteúdo das bordas superior e inferior.
-        paddingVertical: 14,
+        paddingVertical: 10,
         // Defino o tamanho da letra para diferenciar este texto dos demais.
         fontSize: 16,
     }, // Concluo os campos de campo e volto ao objeto que reúne essa configuração.
     // Reúno os estilos de os botões principais para as telas usarem o mesmo padrão.
     botao: {
         // Garanto uma altura mínima para o campo ou botão continuar confortável de tocar.
-        minHeight: 52,
+        minHeight: 44,
         // Escolho a cor de fundo deste bloco usando a paleta compartilhada quando ela aparece aqui.
         backgroundColor: cores.destaque,
         // Arredondo os cantos deste elemento para manter o padrão visual.
@@ -161,7 +161,7 @@ export const estilos = StyleSheet.create({
         // Afasto o conteúdo das bordas esquerda e direita.
         paddingHorizontal: 18,
         // Afasto o conteúdo das bordas superior e inferior.
-        paddingVertical: 14,
+        paddingVertical: 10,
         // Alinho os filhos no eixo transversal à direção do bloco.
         alignItems: 'center',
         // Alinho os filhos no eixo principal do bloco.
