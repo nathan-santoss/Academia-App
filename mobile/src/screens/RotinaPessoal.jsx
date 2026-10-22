@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import TelaFormulario from '../components/TelaFormulario';
 import { router } from 'expo-router';
 import { useAcesso } from '../contexts/AcessoContext';
 import EditorRotina from '../components/EditorRotina';
@@ -14,6 +14,8 @@ import { erroRotina } from '../utils/formulario-rotina';
 export default function RotinaPessoal() {
     const { usuario } = useAcesso();
     const [opcoes, definirOpcoes] = useState(false);
+    const [tentativa, definirTentativa] = useState(0);
+    const [carregando, definirCarregando] = useState(true);
     const salvando = useRef(false);
     const [rotina, definirRotina] = useState(null);
     const [recomendada, definirRecomendada] = useState(null);
@@ -23,6 +25,7 @@ export default function RotinaPessoal() {
     useEffect(function carregar() {
         let ativa = true;
         async function consultar() {
+            definirCarregando(true);
             try {
                 const rascunho = await lerRascunho(usuario.id, 'rotina');
                 if (rascunho && ativa) {
@@ -48,11 +51,13 @@ export default function RotinaPessoal() {
                 }
             } catch (falha) {
                 if (ativa) { definirMensagem(falha.message); }
+            } finally {
+                if (ativa) { definirCarregando(false); }
             }
         }
         consultar();
         return function sair() { ativa = false; };
-    }, [usuario.id]);
+    }, [usuario.id, tentativa]);
 
     function editar(nova) {
         definirRotina(nova);
@@ -204,16 +209,18 @@ export default function RotinaPessoal() {
     );
 
     return (
-        <SafeAreaView
-            style={visual.tela}
-            edges={['bottom', 'left', 'right']}
-        >
+        <TelaFormulario rolavel={false}>
             {!rotina && (
                 <View style={visual.conteudo}>
                     <Text
                         style={visual.detalhe}
                         accessibilityLiveRegion="polite"
                     >{mensagem}</Text>
+                    <AcaoRotina
+                        titulo="Tentar carregar rotina novamente"
+                        desabilitada={carregando}
+                        aoPressionar={function repetir() { definirTentativa(tentativa + 1); }}
+                    />
                 </View>
             )}
             {rotina && (
@@ -226,6 +233,6 @@ export default function RotinaPessoal() {
                     desabilitado={ocupado}
                 />
             )}
-        </SafeAreaView>
+        </TelaFormulario>
     );
 }

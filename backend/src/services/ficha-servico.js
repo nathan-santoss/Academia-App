@@ -1,4 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import { conferirReferencias } from './exercicio-servico.js';
+import { registrarAuditoria } from './auditoria-servico.js';
+import { notificarAluno } from './notificacao-servico.js';
 import * as fichas from '../repositories/ficha-repositorio.js';
 import * as treinos from '../repositories/treino-repositorio.js';
 import { exigirPapel } from './equipe-servico.js';
@@ -74,6 +77,7 @@ export async function publicarFicha(acesso, alunoId, entrada) {
         if (rascunho.versaoBase !== versao) {
             throw erroOperacao(409, 'Outro instrutor publicou uma ficha. Compare a versão atual e prepare um novo rascunho.');
         }
+        await conferirReferencias(rascunho.conteudo, transacao);
         const publicada = await treinos.criarRotina({
             id: randomUUID(),
             alunoId: alunoId,
@@ -85,6 +89,11 @@ export async function publicarFicha(acesso, alunoId, entrada) {
         await fichas.atualizarRascunho(rascunho, {
             publicadaId: publicada.id,
         }, transacao);
+        await registrarAuditoria(acesso, alunoId, 'ficha_publicada', publicada.id, {
+            anterior: atual,
+            atual: publicada.toJSON(),
+        }, transacao);
+        await notificarAluno(alunoId, 'ficha:' + publicada.id, 'Sua ficha recomendada foi atualizada.', '/treinos/rotinas', transacao);
         return publicada;
     });
 }

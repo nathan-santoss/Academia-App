@@ -211,6 +211,10 @@ export default function Entrar() {
                     // Concluo esta expressão JavaScript e volto à composição visual da tela.
                     )}
                     {/* Apresento a orientação escrita abaixo com Text para explicar esta parte da tela. */}
+                    <BotaoLink
+                        titulo="Esqueci minha senha"
+                        destino="/recuperar"
+                    />
                     <Text style={estilos.descricao}>Use uma conexão com a internet. O primeiro acesso pode levar até um minuto enquanto o servidor inicia.</Text>
                     {/* Encerro o conteúdo de ScrollView; os próximos elementos ficam fora deste bloco. */}
                 </ScrollView>

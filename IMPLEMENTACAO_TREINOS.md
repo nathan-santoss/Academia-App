@@ -1,3 +1,5 @@
+> Continuidade em 20/10/2026: [revisão do backend](REVISAO_BACKEND.md) e [contratos da API](backend/CONTRATOS_API.md).
+
 # Implementação do fluxo de treino
 
 Atualização: 14/10/2026. Branch: `implementacao/mvp-treino-demonstrativo`.

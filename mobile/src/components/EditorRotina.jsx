@@ -53,6 +53,7 @@ export default function EditorRotina({ rotina, aoAlterar, telaCompleta = false, 
             dono: dono.current,
             exercicio: exercicio,
             treino: titulo,
+            exercicios: divisao.exercicios,
             aoConfirmar: function confirmar(editado) {
                 const ultima = atual.current;
                 ultima.aoAlterar(aplicarExercicio(ultima.rotina, divisaoId, editado, !exercicio));

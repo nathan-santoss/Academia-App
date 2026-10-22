@@ -12,6 +12,16 @@ export async function consultarPapeis(acesso) {
     });
 }
 
+export async function exigirAlgumPapel(acesso, permitidos) {
+    const papeis = await consultarPapeis(acesso);
+    if (!papeis.some(function autorizado(papel) {
+        return permitidos.includes(papel);
+    })) {
+        throw erroOperacao(403, 'Esta ação exige vínculo funcional autorizado.');
+    }
+    return papeis;
+}
+
 export async function exigirPapel(acesso, papel) {
     const papeis = await consultarPapeis(acesso);
     if (!papeis.includes(papel)) {

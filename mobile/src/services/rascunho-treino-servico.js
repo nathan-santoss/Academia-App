@@ -25,7 +25,7 @@ export async function lerRascunho(alunoId, tipo) {
     }
     const chaveSalva = await SecureStore.getItemAsync('academia.treino.chave.' + alunoId);
     if (!chaveSalva) {
-        throw new Error('O aparelho perdeu a chave do rascunho. Os dados locais nÃ£o podem ser recuperados.');
+        throw new Error('O aparelho perdeu a chave do rascunho. Os dados locais não podem ser recuperados.');
     }
     const chave = await AESEncryptionKey.import(chaveSalva, 'hex');
     const bytesCifrados = Uint8Array.from(atob(cifrado), function converter(caractere) {
@@ -37,10 +37,10 @@ export async function lerRascunho(alunoId, tipo) {
 
 export function guardarRascunho(alunoId, tipo, dados) {
     const texto = JSON.stringify(dados);
-    // Enfileiro escritas para uma gravaÃ§Ã£o antiga nÃ£o substituir a ediÃ§Ã£o mais recente.
+    // Enfileiro escritas para uma gravação antiga não substituir a edição mais recente.
     const gravacao = fila.then(async function proteger() {
         const bytes = new TextEncoder().encode(texto);
-        if (bytes.length > 256000) {
+        if (bytes.length > 1048576) {
             throw new Error('O rascunho atingiu o limite local. Sincronize antes de continuar.');
         }
         const chave = await obterChave(alunoId);

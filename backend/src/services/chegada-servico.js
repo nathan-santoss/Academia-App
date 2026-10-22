@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { consultarCobertura } from './cobertura-servico.js';
+import { registrarAuditoria } from './auditoria-servico.js';
 import * as repositorio from '../repositories/equipe-repositorio.js';
 import { executarTransacao, bloquearAluno } from '../repositories/treino-repositorio.js';
 import { exigirPapel } from './equipe-servico.js';
@@ -49,6 +51,10 @@ export async function autorizarExcecao(acesso, alunoId, entrada) {
         if (chegada.autorizadaPor) {
             return chegada;
         }
+        await registrarAuditoria(acesso, alunoId, 'excecao_autorizada', chegada.id, {
+            dia: dia,
+            motivo: motivo,
+        }, transacao);
         return repositorio.atualizarChegada(chegada, {
             autorizadaPor: acesso.contaId,
             autorizadaEm: new Date(),
@@ -66,13 +72,25 @@ export async function confirmarChegada(acesso, alunoId) {
         if (!aluno || !aluno.ativo) {
             throw erroOperacao(404, 'Aluno ativo não encontrado.');
         }
-        const chegada = await repositorio.buscarChegada(alunoId, diaAcademia(), transacao);
-        if (!chegada || !chegada.autorizadaPor) {
-            throw erroOperacao(403, 'Sem cobertura implementada, a entrada exige uma exceção diária autorizada pela Gestão.');
+        let chegada = await repositorio.buscarChegada(alunoId, diaAcademia(), transacao);
+        const cobertura = await consultarCobertura(alunoId, transacao);
+        if (!cobertura.permitida && (!chegada || !chegada.autorizadaPor)) {
+            throw erroOperacao(403, 'Aluno sem cobertura válida. A Gestão pode avaliar uma exceção para hoje.');
+        }
+        if (!chegada) {
+            chegada = await repositorio.criarChegada({
+                id: randomUUID(),
+                alunoId: alunoId,
+                dia: diaAcademia(),
+            }, transacao);
         }
         if (chegada.confirmadaEm) {
             return chegada;
         }
+        await registrarAuditoria(acesso, alunoId, 'chegada_confirmada', chegada.id, {
+            dia: diaAcademia(),
+            cobertura: cobertura.estado,
+        }, transacao);
         return repositorio.atualizarChegada(chegada, {
             confirmadaPor: acesso.contaId,
             confirmadaEm: new Date(),

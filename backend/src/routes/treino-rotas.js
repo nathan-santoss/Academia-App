@@ -1,9 +1,11 @@
 import { Router } from 'express';
+import { minhaEvolucao } from '../controllers/evolucao-controlador.js';
 import { exigirSessao } from '../middlewares/autenticacao.js';
 import * as controlador from '../controllers/treino-controlador.js';
 
 const rotas = Router();
 rotas.use(exigirSessao);
+rotas.get('/evolucao', minhaEvolucao);
 rotas.get('/configuracao', controlador.consultarConfiguracao);
 rotas.post('/demonstracao', controlador.iniciarDemonstracao);
 rotas.get('/rotinas', controlador.consultarRotinas);
@@ -15,5 +17,6 @@ rotas.post('/chegada', controlador.solicitarChegada);
 rotas.post('/', controlador.iniciarTreino);
 rotas.get('/:id', controlador.consultarTreino);
 rotas.put('/:id', controlador.sincronizarTreino);
+rotas.put('/:id/correcao', controlador.corrigir);
 
 export default rotas;

@@ -1,4 +1,5 @@
 import { randomUUID } from 'expo-crypto';
+import { prepararConteudo } from './validar-rotina';
 import { completarNomesRotina, erroRotina } from './formulario-rotina';
 
 export function novaDivisao() {
@@ -33,26 +34,17 @@ export function novoExercicio(catalogo = null) {
     return exercicio;
 }
 
-export function prepararRotina(entrada) {
-    const aviso = erroRotina(entrada);
+export { posicionarItem } from './organizar-rotina';
+
+export function prepararRotina(formulario) {
+    const aviso = erroRotina(formulario);
     if (aviso) { throw new Error(aviso); }
-    const formulario = completarNomesRotina(entrada);
-    return Object.assign({}, formulario, {
-        divisoes: formulario.divisoes.map(function prepararDivisao(divisao) {
-            return Object.assign({}, divisao, {
-                exercicios: divisao.exercicios.map(function prepararExercicio(exercicio) {
-                    let carga = null;
-                    if (String(exercicio.carga).trim() !== '' && exercicio.carga !== null) {
-                        carga = Number(String(exercicio.carga).replace(',', '.'));
-                    }
-                    return Object.assign({}, exercicio, {
-                        series: Number(exercicio.series),
-                        meta: Number(exercicio.meta),
-                        carga: carga,
-                        descanso: Number(exercicio.descanso),
-                    });
-                }),
-            });
-        }),
-    });
+    // Uno os nomes sugeridos ao contrato limpo usado pelas fichas e pelos modelos.
+    const conteudo = prepararConteudo(completarNomesRotina(formulario));
+    if (formulario.versaoAnterior !== undefined) {
+        return Object.assign({}, conteudo, {
+            versaoAnterior: formulario.versaoAnterior,
+        });
+    }
+    return conteudo;
 }

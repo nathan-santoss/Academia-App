@@ -40,7 +40,7 @@ export default function EditorExercicio({ exercicio, aoAlterar }) {
             <EscolhaRotina
                 rotulo="Equipamento"
                 valor={exercicio.equipamento}
-                opcoes={['Peso corporal', 'Halteres', 'Barra', 'Máquina', 'Cabo']}
+                opcoes={['Peso corporal', 'Halteres', 'Barra', 'Máquina', 'Polia', 'Elástico', 'Kettlebell']}
                 aoAlterar={function equipamento(valor) { alterar('equipamento', valor); }}
             />
             <View style={visual.linha}>
@@ -101,7 +101,7 @@ export default function EditorExercicio({ exercicio, aoAlterar }) {
                     <EscolhaRotina
                         rotulo="Como a carga é medida"
                         valor={exercicio.referenciaCarga}
-                        opcoes={['total em kg', 'por halter em kg', 'por lado em kg']}
+                        opcoes={['total em kg', 'por halter em kg', 'por lado em kg', 'peso corporal']}
                         limite={60}
                         aoAlterar={function referencia(valor) { alterar('referenciaCarga', valor); }}
                     />

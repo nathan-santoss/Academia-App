@@ -1,8 +1,8 @@
 // Mostro a divisão escolhida e deixo o aluno registrar, corrigir ou desmarcar cada série.
 // Uso o mesmo treino nos modos guiado e lista; o hook cuida de guardar e sincronizar os registros.
 import { useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, Text, View } from 'react-native';
+import TelaFormulario from '../components/TelaFormulario';
 import { useAcesso } from '../contexts/AcessoContext';
 import useTreino from '../hooks/useTreino';
 import Botao from '../components/Botao';
@@ -50,7 +50,7 @@ export default function ExecutarTreino() {
                             exercicio={exercicio}
                             numero={numero}
                             serie={serie}
-                            bloqueado={estado.ocupado || Boolean(rascunho.encerrarPendente)}
+                            bloqueado={estado.ocupado || estado.temConflito || Boolean(rascunho.encerrarPendente)}
                             aoSalvar={function salvar(dados) { registrar(exercicio, dados); }}
                             aoDesmarcar={function desmarcar() {
                                 const restantes = rascunho.treino.series.filter(function manter(item) { return item.exercicioId !== exercicio.id || item.numero !== numero; });
@@ -89,7 +89,9 @@ export default function ExecutarTreino() {
                 <Text style={estilos.titulo}>{treino.referencia.nome + ' • ' + treino.referencia.divisao.nome}</Text>
                 <Text style={estilos.descricao}>{treino.referencia.origem + ' • versão ' + treino.referencia.versao}</Text>
                 <Text style={estilos.etiqueta}>{sincronizacao}</Text>
-                {treino.referencia.modo === 'demonstracao' && <Text style={estilos.etiqueta}>Treino demonstrativo • sem presença oficial</Text>}
+                {treino.referencia.modo === 'demonstracao' && (
+                    <Text style={estilos.etiqueta}>Treino demonstrativo • sem presença oficial</Text>
+                )}
                 <Botao
                     titulo={modo}
                     secundario
@@ -125,7 +127,7 @@ export default function ExecutarTreino() {
                 />
                 <Botao
                     titulo="Encerrar treino"
-                    desabilitado={estado.ocupado || Boolean(rascunho.encerrarPendente)}
+                    desabilitado={estado.ocupado || estado.temConflito || Boolean(rascunho.encerrarPendente)}
                     aoPressionar={encerrar}
                 />
             </View>
@@ -133,28 +135,42 @@ export default function ExecutarTreino() {
     }
 
     return (
-        <SafeAreaView
-            style={estilos.tela}
-            edges={['bottom', 'left', 'right']}
-        >
-            <ScrollView
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={estilos.conteudo}
-            >
-                <Text
-                    accessibilityLiveRegion="polite"
-                    style={estilos.descricao}
-                >{estado.mensagem}</Text>
-                {conteudo}
-                {!rascunho && estado.falhaRecuperacao && (
-                    <Botao
-                        titulo="Tentar recuperar treino novamente"
-                        desabilitado={estado.ocupado}
-                        aoPressionar={estado.recuperarNovamente}
-                    />
-                )}
-                {!rascunho && !estado.ocupado && !estado.falhaRecuperacao && <Text style={estilos.texto}>Nenhum treino ativo neste aparelho. Volte a Treinos para escolher uma divisão.</Text>}
-            </ScrollView>
-        </SafeAreaView>
+        <TelaFormulario>
+            <Text
+                accessibilityLiveRegion="polite"
+                style={estilos.descricao}
+            >{estado.mensagem}</Text>
+            {estado.temConflito && (
+                <Botao
+                    titulo="Resolver divergência com o servidor"
+                    secundario
+                    desabilitado={estado.ocupado}
+                    aoPressionar={function confirmar() {
+                        Alert.alert('Recuperar séries confirmadas?', 'As alterações locais não confirmadas serão descartadas. Confira seu registro antes de prosseguir.', [
+                            {
+                                text: 'Manter edição local',
+                                style: 'cancel',
+                            },
+                            {
+                                text: 'Usar versão do servidor',
+                                style: 'destructive',
+                                onPress: estado.recuperarConfirmado,
+                            },
+                        ]);
+                    }}
+                />
+            )}
+            {conteudo}
+            {!rascunho && estado.falhaRecuperacao && (
+                <Botao
+                    titulo="Tentar recuperar treino novamente"
+                    desabilitado={estado.ocupado}
+                    aoPressionar={estado.recuperarNovamente}
+                />
+            )}
+            {!rascunho && !estado.ocupado && !estado.falhaRecuperacao && (
+                <Text style={estilos.texto}>Nenhum treino ativo neste aparelho. Volte a Treinos para escolher uma divisão.</Text>
+            )}
+        </TelaFormulario>
     );
 }

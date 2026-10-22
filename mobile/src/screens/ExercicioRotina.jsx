@@ -73,6 +73,27 @@ export default function ExercicioRotina() {
         if (concluido.current || !edicao || !exercicio) { return; }
         const aviso = erroExercicio(exercicio);
         if (aviso) { definirErro(aviso); return; }
+        const repetido = !edicao.exercicio && exercicio.exercicioCatalogoId && edicao.exercicios.some(function mesmoItem(item) {
+            return item.exercicioCatalogoId === exercicio.exercicioCatalogoId;
+        });
+        if (repetido) {
+            Alert.alert('Exercício repetido', 'Este exercício já está no treino. Deseja incluí-lo novamente?', [
+                {
+                    text: 'Cancelar',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Incluir novamente',
+                    onPress: aplicar,
+                },
+            ]);
+            return;
+        }
+        aplicar();
+    }
+
+    function aplicar() {
+        if (concluido.current) { return; }
         try {
             confirmar(edicao, exercicio);
             concluido.current = true;

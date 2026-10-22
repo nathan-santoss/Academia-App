@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import CampoRotina from './rotinas/CampoRotina';
+import CampoSelecao from './CampoSelecao';
 import AcaoRotina from './rotinas/AcaoRotina';
 import { consultarExercicios } from '../services/exercicio-servico';
 import { visualRotina as visual } from '../theme/rotina';
 
-export default function SelecionarExercicio({ aoSelecionar, aoManual }) {
+export default function SelecionarExercicio({ aoSelecionar, aoManual = null, aoCancelar = null }) {
     const [busca, definirBusca] = useState('');
+    const [grupo, definirGrupo] = useState('');
     const [consulta, definirConsulta] = useState({
         busca: '',
+        grupo: '',
         pagina: 0,
     });
     const [resultado, definirResultado] = useState(null);
@@ -17,7 +20,7 @@ export default function SelecionarExercicio({ aoSelecionar, aoManual }) {
 
     useEffect(function carregar() {
         let visivel = true;
-        consultarExercicios(consulta.busca, '', consulta.pagina).then(function recebeu(dados) {
+        consultarExercicios(consulta.busca, consulta.grupo, consulta.pagina).then(function recebeu(dados) {
             if (visivel) { definirResultado(dados); }
         }).catch(function falhou(falha) {
             if (visivel) { definirErro(falha.message); }
@@ -37,6 +40,7 @@ export default function SelecionarExercicio({ aoSelecionar, aoManual }) {
     function pesquisar() {
         iniciarConsulta({
             busca: busca.trim(),
+            grupo: grupo.trim(),
             pagina: 0,
         });
     }
@@ -55,17 +59,29 @@ export default function SelecionarExercicio({ aoSelecionar, aoManual }) {
                 aoAlterar={definirBusca}
                 aoEnviar={pesquisar}
             />
+            <CampoSelecao
+                rotulo="Grupo muscular"
+                valor={grupo || 'Todos'}
+                opcoes={['Todos', 'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Glúteos', 'Abdômen', 'Cardio']}
+                permitirOutro
+                aoAlterar={function escolher(valor) {
+                    if (valor === 'Todos') { definirGrupo(''); }
+                    else { definirGrupo(valor); }
+                }}
+            />
             <View style={visual.linha}>
                 <AcaoRotina
                     titulo="Pesquisar"
                     desabilitada={ocupado}
                     aoPressionar={pesquisar}
                 />
-                <AcaoRotina
-                    titulo="+ Criar exercício"
-                    secundaria
-                    aoPressionar={aoManual}
-                />
+                {aoManual && (
+                    <AcaoRotina
+                        titulo="+ Criar exercício"
+                        secundaria
+                        aoPressionar={aoManual}
+                    />
+                )}
             </View>
             {ocupado && <Text style={visual.detalhe}>Consultando exercícios…</Text>}
             {Boolean(erro) && (
@@ -88,13 +104,23 @@ export default function SelecionarExercicio({ aoSelecionar, aoManual }) {
                 let titulo = item.nome + '\n' + item.grupoMuscular + ' • ' + item.equipamento;
                 if (item.demonstrativo) { titulo += '\nExemplo demonstrativo'; }
                 return (
-                    <AcaoRotina
+                    <View
                         key={item.id}
-                        titulo={titulo}
-                        descricao="Selecionar e preencher séries e repetições"
-                        secundaria
-                        aoPressionar={function selecionar() { aoSelecionar(item); }}
-                    />
+                        style={visual.grupo}
+                    >
+                        <AcaoRotina
+                            titulo={titulo}
+                            descricao="Selecionar exercício"
+                            secundaria
+                            aoPressionar={function selecionar() { aoSelecionar(item); }}
+                        />
+                        {Boolean(item.descricao) && (
+                            <Text
+                                style={visual.detalhe}
+                                numberOfLines={2}
+                            >{item.descricao}</Text>
+                        )}
+                    </View>
                 );
             })}
             {resultado && (
@@ -115,6 +141,13 @@ export default function SelecionarExercicio({ aoSelecionar, aoManual }) {
                         />
                     </View>
                 </View>
+            )}
+            {aoCancelar && (
+                <AcaoRotina
+                    titulo="Fechar catálogo"
+                    secundaria
+                    aoPressionar={aoCancelar}
+                />
             )}
         </View>
     );

@@ -78,6 +78,54 @@ function Telas() {
             {/* Retiro também o histórico privado quando a pessoa sai da conta. */}
             <Stack.Protected guard={Boolean(acesso.usuario)}>
                 <Stack.Screen
+                    name="funcionarios"
+                    options={{
+                        title: 'Equipe',
+                    }}
+                />
+                <Stack.Screen
+                    name="catalogo"
+                    options={{
+                        title: 'Planos e modalidades',
+                    }}
+                />
+                <Stack.Screen
+                    name="exercicios"
+                    options={{
+                        title: 'Exercícios',
+                    }}
+                />
+                <Stack.Screen
+                    name="financeiro"
+                    options={{
+                        title: 'Meu plano',
+                    }}
+                />
+                <Stack.Screen
+                    name="notificacoes"
+                    options={{
+                        title: 'Notificações',
+                    }}
+                />
+                <Stack.Screen
+                    name="medidas"
+                    options={{
+                        title: 'Medidas e privacidade',
+                    }}
+                />
+                <Stack.Screen
+                    name="modelos"
+                    options={{
+                        title: 'Modelos de treino',
+                    }}
+                />
+                <Stack.Screen
+                    name="treinos/corrigir"
+                    options={{
+                        title: 'Corrigir treino',
+                    }}
+                />
+                <Stack.Screen
                     // Relaciono esta tela ao arquivo ou grupo o texto "(menu)" que o Expo Router reconhece como rota.
                     name="(menu)"
                     // Agrupo as opções desta tela, como título e exibição do cabeçalho.
@@ -130,6 +178,12 @@ function Telas() {
             {/* Limito estas rotas pela condição de acesso; o navegador também retira as rotas que deixam de ser
                 permitidas. */}
             <Stack.Protected guard={!acesso.usuario}>
+                <Stack.Screen
+                    name="recuperar"
+                    options={{
+                        title: 'Recuperar acesso',
+                    }}
+                />
                 {/* Configuro esta rota pelo nome do arquivo para ela participar do Stack. */}
                 <Stack.Screen
                     // Relaciono esta tela ao arquivo ou grupo o texto "entrar" que o Expo Router reconhece como rota.

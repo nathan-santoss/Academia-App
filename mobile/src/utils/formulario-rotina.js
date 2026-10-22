@@ -39,7 +39,7 @@ export function erroExercicio(exercicio) {
     if (!inteiroValido(exercicio.series, 1, 20)) { return 'Escolha de 1 a 20 séries inteiras.'; }
     if (!inteiroValido(exercicio.meta, 1, 36000)) { return 'Informe repetições ou segundos inteiros entre 1 e 36000.'; }
     if (!inteiroValido(exercicio.descanso, 0, 3600)) { return 'Escolha o descanso entre 0 e 3600 segundos.'; }
-    if (exercicio.carga !== null && String(exercicio.carga).trim() !== '') {
+    if (exercicio.carga !== null && exercicio.carga !== undefined && String(exercicio.carga).trim() !== '') {
         const carga = String(exercicio.carga).trim().replace(',', '.');
         if (!/^\d+(\.\d+)?$/.test(carga) || Number(carga) > 2000) { return 'Informe uma carga entre 0 e 2000 kg ou deixe em branco.'; }
     }
@@ -72,7 +72,7 @@ export function resumoExercicio(exercicio) {
     let unidade = ' repetições';
     if (exercicio.tipo === 'duracao') { unidade = ' segundos'; }
     let resumo = exercicio.series + ' × ' + exercicio.meta + unidade;
-    if (exercicio.carga !== null && String(exercicio.carga).trim() !== '') {
+    if (exercicio.carga !== null && exercicio.carga !== undefined && String(exercicio.carga).trim() !== '') {
         resumo += ' • ' + exercicio.carga + ' kg';
     }
     return resumo + ' • descanso ' + exercicio.descanso + 's';
@@ -102,10 +102,4 @@ export function aplicarExercicio(rotina, divisaoId, exercicio, novo) {
     });
 }
 
-export function reposicionarItem(lista, origem, destino) {
-    if (origem < 0 || origem >= lista.length || destino < 0 || destino >= lista.length) { return lista; }
-    const copia = lista.slice();
-    const item = copia.splice(origem, 1)[0];
-    copia.splice(destino, 0, item);
-    return copia;
-}
+export { posicionarItem as reposicionarItem } from './organizar-rotina.js';

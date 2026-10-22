@@ -1,5 +1,7 @@
 # Revisão do aplicativo em relação ao projeto da academia
 
+> Atualização de 20/10/2026: consulte [REVISAO_BACKEND.md](REVISAO_BACKEND.md) e [contratos da API](backend/CONTRATOS_API.md). O levantamento abaixo é histórico.
+
 > Continuidade da implementação: consulte [IMPLEMENTACAO_TREINOS.md](IMPLEMENTACAO_TREINOS.md) para o fluxo de treino acrescentado, ativação da equipe, verificações e limitações. O diagnóstico abaixo foi preservado como registro da situação anterior.
 
 **Data:** 14/10/2026  
