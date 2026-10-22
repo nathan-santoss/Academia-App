@@ -1,17 +1,20 @@
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAcesso } from '../contexts/AcessoContext';
 import EditorRotina from '../components/EditorRotina';
-import Botao from '../components/Botao';
+import AcaoRotina from '../components/rotinas/AcaoRotina';
 import { consultarRotinas, salvarRotina } from '../services/treino-servico';
 import { lerRascunho, guardarRascunho, apagarRascunho } from '../services/rascunho-treino-servico';
 import { novaDivisao, prepararRotina } from '../utils/editar-rotina';
-import { estilos } from '../theme/tema';
+import { visualRotina as visual } from '../theme/rotina';
+import { erroRotina } from '../utils/formulario-rotina';
 
 export default function RotinaPessoal() {
     const { usuario } = useAcesso();
+    const [opcoes, definirOpcoes] = useState(false);
+    const salvando = useRef(false);
     const [rotina, definirRotina] = useState(null);
     const [recomendada, definirRecomendada] = useState(null);
     const [ocupado, definirOcupado] = useState(false);
@@ -59,6 +62,8 @@ export default function RotinaPessoal() {
     }
 
     async function salvar() {
+        if (salvando.current) { return; }
+        salvando.current = true;
         definirOcupado(true);
         let protegido = false;
         try {
@@ -76,11 +81,15 @@ export default function RotinaPessoal() {
             if (protegido) { aviso = ' Seu rascunho foi mantido.'; }
             definirMensagem(falha.message + aviso);
         } finally {
+            salvando.current = false;
             definirOcupado(false);
         }
     }
 
     function confirmar() {
+        if (ocupado) { return; }
+        const aviso = erroRotina(rotina);
+        if (aviso) { Alert.alert('Confira a rotina', aviso); return; }
         let mensagem = 'Esta rotina é criada/adaptada por você, não é uma prescrição profissional. Procure orientação presencial em caso de dúvida.';
         if (rotina.versaoAnterior > 0) {
             mensagem += ' Confirma substituir sua rotina pessoal atual? O histórico de treinos será preservado.';
@@ -147,57 +156,76 @@ export default function RotinaPessoal() {
         ]);
     }
 
-    /** @type {'auto' | 'none'} */
-    let eventos = 'auto';
-    if (ocupado) {
-        eventos = 'none';
-    }
+    const cabecalho = (
+        <View style={visual.grupo}>
+            {Boolean(mensagem) && (
+                <Text
+                    accessibilityLiveRegion="polite"
+                    style={visual.detalhe}
+                >{mensagem}</Text>
+            )}
+            <View style={visual.linha}>
+                <Text style={[visual.detalhe, visual.expandir]}>Monte um treino de cada vez.</Text>
+                <AcaoRotina
+                    titulo="Mais opções"
+                    secundaria
+                    aoPressionar={function abrir() { definirOpcoes(!opcoes); }}
+                />
+            </View>
+            {opcoes && (
+                <View style={visual.cartao}>
+                    {recomendada && (
+                        <AcaoRotina
+                            titulo="Copiar rotina recomendada"
+                            secundaria
+                            aoPressionar={copiar}
+                        />
+                    )}
+                    <AcaoRotina
+                        titulo="Recuperar versão confirmada"
+                        secundaria
+                        desabilitada={ocupado}
+                        aoPressionar={recarregar}
+                    />
+                    <Text style={visual.detalhe}>A ficha do instrutor permanece separada da sua rotina pessoal.</Text>
+                </View>
+            )}
+        </View>
+    );
+    let tituloSalvar = 'Salvar rotina';
+    if (ocupado) { tituloSalvar = 'Aguarde…'; }
+    const rodape = (
+        <AcaoRotina
+            titulo={tituloSalvar}
+            secundaria
+            desabilitada={ocupado}
+            aoPressionar={confirmar}
+        />
+    );
 
     return (
         <SafeAreaView
-            style={estilos.tela}
+            style={visual.tela}
             edges={['bottom', 'left', 'right']}
         >
-            <ScrollView
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={estilos.conteudo}
-            >
-                <Text style={estilos.titulo}>Minha rotina pessoal</Text>
-                <Text style={estilos.descricao}>Organize suas divisões e exercícios. A ficha do instrutor permanece separada.</Text>
-                <Text
-                    accessibilityLiveRegion="polite"
-                    style={estilos.descricao}
-                >{mensagem}</Text>
-                {rotina && (
-                    <View
-                        pointerEvents={eventos}
-                        style={estilos.grupo}
-                    >
-                        {recomendada && (
-                            <Botao
-                                titulo="Copiar rotina recomendada"
-                                secundario
-                                aoPressionar={copiar}
-                            />
-                        )}
-                        <EditorRotina
-                            rotina={rotina}
-                            aoAlterar={editar}
-                        />
-                        <Botao
-                            titulo="Salvar rotina"
-                            desabilitado={ocupado}
-                            aoPressionar={confirmar}
-                        />
-                        <Botao
-                            titulo="Recuperar versão confirmada"
-                            secundario
-                            desabilitado={ocupado}
-                            aoPressionar={recarregar}
-                        />
-                    </View>
-                )}
-            </ScrollView>
+            {!rotina && (
+                <View style={visual.conteudo}>
+                    <Text
+                        style={visual.detalhe}
+                        accessibilityLiveRegion="polite"
+                    >{mensagem}</Text>
+                </View>
+            )}
+            {rotina && (
+                <EditorRotina
+                    rotina={rotina}
+                    aoAlterar={editar}
+                    telaCompleta
+                    cabecalho={cabecalho}
+                    rodape={rodape}
+                    desabilitado={ocupado}
+                />
+            )}
         </SafeAreaView>
     );
 }

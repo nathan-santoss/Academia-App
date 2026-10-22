@@ -1,4 +1,5 @@
 import { randomUUID } from 'expo-crypto';
+import { completarNomesRotina, erroRotina } from './formulario-rotina';
 
 export function novaDivisao() {
     return {
@@ -32,18 +33,10 @@ export function novoExercicio(catalogo = null) {
     return exercicio;
 }
 
-export function moverItem(lista, indice, direcao) {
-    const destino = indice + direcao;
-    if (destino < 0 || destino >= lista.length) {
-        return lista;
-    }
-    const copia = lista.slice();
-    copia[indice] = lista[destino];
-    copia[destino] = lista[indice];
-    return copia;
-}
-
-export function prepararRotina(formulario) {
+export function prepararRotina(entrada) {
+    const aviso = erroRotina(entrada);
+    if (aviso) { throw new Error(aviso); }
+    const formulario = completarNomesRotina(entrada);
     return Object.assign({}, formulario, {
         divisoes: formulario.divisoes.map(function prepararDivisao(divisao) {
             return Object.assign({}, divisao, {

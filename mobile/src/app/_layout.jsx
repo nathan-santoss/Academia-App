@@ -10,6 +10,7 @@ import { PreferenciasProvider } from '../contexts/PreferenciasContext';
 import { AcessoProvider, useAcesso } from '../contexts/AcessoContext';
 import { configurarNotificacoes } from '../services/notificacao-servico';
 import Aviso from '../components/Aviso';
+import { EdicaoExercicioProvider } from '../contexts/EdicaoExercicioContext';
 
 // Preparo os avisos locais sem pedir permissão durante a abertura do aplicativo.
 configurarNotificacoes();
@@ -93,6 +94,13 @@ function Telas() {
                     }}
                 />
                 <Stack.Screen
+                    name="treinos/exercicio"
+                    options={{
+                        headerShown: false,
+                        gestureEnabled: false,
+                    }}
+                />
+                <Stack.Screen
                     name="treinos/executar"
                     options={{
                         title: 'Executar treino',
@@ -166,7 +174,9 @@ export default function Navegacao() {
                 <StatusBar style="light" />
                 {/* Reaproveito Telas aqui. Leio o estado do acesso e escolho entre a espera inicial e a navegação
                     com suas rotas protegidas. */}
-                <Telas />
+                <EdicaoExercicioProvider>
+                    <Telas />
+                </EdicaoExercicioProvider>
                 {/* Encerro o conteúdo de AcessoProvider; os próximos elementos ficam fora deste bloco. */}
             </AcessoProvider>
             {/* Encerro o conteúdo de PreferenciasProvider; os próximos elementos ficam fora deste bloco. */}
